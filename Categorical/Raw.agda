@@ -92,13 +92,23 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
 
   open import Data.Nat
 
-  mapⱽ : ∀ n → (a ⇨ b) → (V a n ⇨ V b n)
-  mapⱽ  zero   f = !
-  mapⱽ (suc n) f = f ⊗ mapⱽ n f
+  mapⱽˡ : ∀ n → (a ⇨ b) → (Vˡ a n ⇨ Vˡ b n)
+  mapⱽˡ  zero   f = !
+  mapⱽˡ (suc n) f = mapⱽˡ n f ⊗ f
 
-  unzipⱽ : ∀ n → (V (a × b) n ⇨ V a n × V b n)
-  unzipⱽ  zero   = ! ▵ !
-  unzipⱽ (suc n) = transpose ∘ second (unzipⱽ n)
+  unzipⱽˡ : ∀ n → (Vˡ (a × b) n ⇨ Vˡ a n × Vˡ b n)
+  unzipⱽˡ  zero   = ! ▵ !
+  unzipⱽˡ (suc n) = transpose ∘ first (unzipⱽˡ n)
+
+  -- (V a n × V b n) × (a × b) ⇨ (V a n × a) × (V b n × b)
+
+  mapⱽʳ : ∀ n → (a ⇨ b) → (Vʳ a n ⇨ Vʳ b n)
+  mapⱽʳ  zero   f = !
+  mapⱽʳ (suc n) f = f ⊗ mapⱽʳ n f
+
+  unzipⱽʳ : ∀ n → (Vʳ (a × b) n ⇨ Vʳ a n × Vʳ b n)
+  unzipⱽʳ  zero   = ! ▵ !
+  unzipⱽʳ (suc n) = transpose ∘ second (unzipⱽʳ n)
 
   -- (a × b) × (V a n × V b n) ⇨ (a × V a n) × (b × V b n)
 

@@ -32,6 +32,7 @@ conv ((a , b) , v₂) = map avg (zip v₀ (zip v₁ v₂))
    v₁ = shiftʳ b v₂
    v₀ = shiftʳ a v₁
 
+
 mealy : (s × a → b × s) → (∀ {n} → s × Vec a n → Vec b n)
 mealy f (s , []) = []
 mealy f (s , x ∷ xs) = let b , s′ = f (s , x) in b ∷ mealy f (s′ , xs)
@@ -47,10 +48,10 @@ open ≡-Reasoning
 conv₁ : ℕ² × Vec ℕ m → Vec ℕ m
 conv₁ = mealy λ ((a , b) , c) → avg (a , b , c) , (b , c)
 
+-- conv₁-spec : ∀ (((a , b) , xs) : ℕ² × Vec ℕ m) → conv₁ ((a , b) , xs) ≡ conv {m} ((a , b) , xs)
 conv₁-spec : conv₁ ≗ conv {m}
 conv₁-spec (_ , []) = refl
 conv₁-spec ((_ , b) , c ∷ xs) rewrite conv₁-spec ((b , c) , xs) = refl
-
 
 -- Figure 1b
 
@@ -68,7 +69,6 @@ decode₂ ((a , b) ∷ ps) = a ∷ b ∷ decode₂ ps
 conv₂-spec : decode₂ ∘ conv₂ {m} ≗ conv {m * 2} ∘ map₂ decode₂
 conv₂-spec {zero } (_ ,   []  ) = refl
 conv₂-spec {suc _} (_ , p ∷ ps) rewrite conv₂-spec (p , ps) = refl
-
 
 -- Figure 1c
 

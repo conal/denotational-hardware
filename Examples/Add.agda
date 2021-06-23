@@ -48,7 +48,7 @@ fullAdd = second ∨ ∘ inAssocˡ′ halfAdd ∘ second halfAdd
 
 -- TODO: semantic specifications and correctness proofs.
 
-ripple : (a ⇨ᶜ b) → (n : ℕ) → (V a n ⇨ᶜ V b n)
+ripple : (a ⇨ᶜ b) → (n : ℕ) → (Vʳ a n ⇨ᶜ Vʳ b n)
 ripple f  zero   = swap
 ripple f (suc n) = assocˡ ∘ second (ripple f n) ∘ inAssocˡ′ f
 
@@ -57,7 +57,7 @@ ripple f (suc n) = assocˡ ∘ second (ripple f n) ∘ inAssocˡ′ f
 -- b , (bs , cₒ)
 -- (b , bs) , cₒ
 
-rippleAdd : ∀ n → V (Bool × Bool) n ⇨ᶜ V Bool n
+rippleAdd : ∀ n → Vʳ (Bool × Bool) n ⇨ᶜ Vʳ Bool n
 rippleAdd = ripple fullAdd
 
 constˡ : (a × b ⇨ c) → (⊤ ⇨ a) → (b ⇨ c)
@@ -76,7 +76,7 @@ speculate f = cond ∘ second (constˡ f false ▵ constˡ f true)
 -- cond (cᵢ , (f (false , a) , f (true , a)))
 
 V² : obj → ℕ → ℕ → obj
-V² a m n = V (V a n) m
+V² a m n = Vʳ (Vʳ a n) m
 
 carrySelect : ∀ m n → V² (Bool × Bool) m n ⇨ᶜ V² Bool m n
 carrySelect m n = ripple (speculate (ripple fullAdd n)) m

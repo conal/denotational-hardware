@@ -13,10 +13,15 @@ open import Data.Nat
 
 private variable a : Ty
 
--- Todo: rename
-replicate′ : ∀ n → (⊤ ⇨ a) → (⊤ ⇨ V a n)
-replicate′ zero    a = !
-replicate′ (suc n) a = a ⦂ replicate′ n a
+-- -- Todo: rename
+-- replicateʳ′ : ∀ n → (⊤ ⇨ a) → (⊤ ⇨ Vʳ a n)
+-- replicateʳ′ zero    a = !
+-- replicateʳ′ (suc n) a = a ⦂ replicateʳ′ n a
+
+-- Another variation
+replicateʳ : ∀ n → a ⇨ Vʳ a n
+replicateʳ zero    = !
+replicateʳ (suc n) = id ▵ replicateʳ n
 
 shiftR : Bool × a ⇨ a × Bool
 shiftR {`⊤}     = swap
