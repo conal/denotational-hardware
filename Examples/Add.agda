@@ -19,45 +19,42 @@ private variable a b c : obj
 -- Morphism with carry-in and carry-out
 infix 0 _⇨ᶜ_
 _⇨ᶜ_ : obj → obj → Set
-a ⇨ᶜ b = Bool × a ⇨ b × Bool
+a ⇨ᶜ b = a × Bool ⇨ Bool × b
 
 -- Note for a ⇨ᶜ b that the carry-in denotes 0 or 1, while the carry-out denotes
 -- (in these examples) 0 or 2^n. Positioning carry-in on the one side and
 -- carry-out on the other helps definitions below come out more simply. Left-in
 -- and right-out reflect the little-endian interpretation and use of
--- right-pointing vectors, though unfortunately contradicts customary practice
--- of writing least significant bit on the right and most significant on the
--- left. It might instead be worth defining and using left-pointing vectors, or
--- trying with big-endian ordering.
+-- left-pointing vectors, Vˡ. Choosing Vˡ rather than the more common Vʳ
+-- reflects the practice of writing least significant bit on the right and most
+-- significant on the left.
 
 -- Summands ⇨ sum , carry
--- λ (a , b) → (a ⊕ b , a ∧ b)
+-- λ (a , cᵢ) → (a ∧ b , a ⊕ b)
 halfAdd : Bool ⇨ᶜ Bool
-halfAdd = xor ▵ ∧
+halfAdd = ∧ ▵ xor
 
 fullAdd : Bool × Bool ⇨ᶜ Bool
-fullAdd = second ∨ ∘ inAssocˡ′ halfAdd ∘ second halfAdd
+fullAdd = first ∨ ∘ inAssocʳ′ halfAdd ∘ first halfAdd
 
--- λ (c , (a , b)) → let (p , d) = halfAdd (a , b)
---                       (q , e) = halfAdd (c , p) in (q , e ∨ d)
+-- λ ((a , b) , c) → let (d , p) = halfAdd (b , a)
+--                       (e , q) = halfAdd (p , c) in (e ∨ d , q)
 
--- c , (a , b)
--- c , (p , d)
--- q , (e , d)
--- q , e ∨ d
+-- (a , b) , c
+-- (d , p) , c
+-- (d , e) , q
+-- e ∨ d , q
 
--- TODO: semantic specifications and correctness proofs.
-
-ripple : (a ⇨ᶜ b) → (n : ℕ) → (Vʳ a n ⇨ᶜ Vʳ b n)
+ripple : (a ⇨ᶜ b) → (n : ℕ) → (Vˡ a n ⇨ᶜ Vˡ b n)
 ripple f  zero   = swap
-ripple f (suc n) = assocˡ ∘ second (ripple f n) ∘ inAssocˡ′ f
+ripple f (suc n) = assocʳ ∘ first (ripple f n) ∘ inAssocʳ′ f
 
--- cᵢ , (a , as)
--- b , (c′ , as)
--- b , (bs , cₒ)
--- (b , bs) , cₒ
+-- (as , a) , cᵢ
+-- (as , c′) , b
+-- (cₒ , bs) , b
+-- cₒ , (bs , b)
 
-rippleAdd : ∀ n → Vʳ (Bool × Bool) n ⇨ᶜ Vʳ Bool n
+rippleAdd : ∀ n → Vˡ (Bool × Bool) n ⇨ᶜ Vˡ Bool n
 rippleAdd = ripple fullAdd
 
 constˡ : (a × b ⇨ c) → (⊤ ⇨ a) → (b ⇨ c)
@@ -68,15 +65,31 @@ constˡ f a = f ∘ first a ∘ unitorⁱˡ
 -- a , b
 -- f (a , b)
 
-speculate : (Bool × a ⇨ b) → (Bool × a ⇨ b)
-speculate f = cond ∘ second (constˡ f false ▵ constˡ f true)
+speculateˡ : (Bool × b ⇨ c) → (Bool × b ⇨ c)
+speculateˡ f = cond ∘ second (constˡ f false ▵ constˡ f true)
+
+constʳ : (a × b ⇨ c) → (⊤ ⇨ b) → (a ⇨ c)
+constʳ f a = f ∘ second a ∘ unitorⁱʳ
 
 -- (cᵢ , a)
 -- (cᵢ , (f (false , a) , f (true , a)))
 -- cond (cᵢ , (f (false , a) , f (true , a)))
 
+-- b
+-- tt , b
+-- a , b
+-- f (a , b)
+
+speculateʳ : (a × Bool ⇨ c) → (a × Bool ⇨ c)
+speculateʳ f = cond ∘ swap ∘ first (constʳ f false ▵ constʳ f true)
+
+-- (a , cᵢ)
+-- ((f (a , false) , f (a , true)) , cᵢ)
+-- (cᵢ , (f (a , false) , f (a , true)))
+-- cond (cᵢ , (f (a , false) , f (a , true)))
+
 V² : obj → ℕ → ℕ → obj
-V² a m n = Vʳ (Vʳ a n) m
+V² a m n = Vˡ (Vˡ a n) m
 
 carrySelect : ∀ m n → V² (Bool × Bool) m n ⇨ᶜ V² Bool m n
-carrySelect m n = ripple (speculate (ripple fullAdd n)) m
+carrySelect m n = ripple (speculateʳ (ripple fullAdd n)) m
