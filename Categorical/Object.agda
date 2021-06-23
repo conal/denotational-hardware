@@ -24,9 +24,13 @@ record Products (obj : Set o) : Set (lsuc o) where
     ⊤ : obj
     _×_ : obj → obj → obj
 
-  -- (Right-pointing) vectors and (perfect binary leaf) trees
-  V T : obj → ℕ → obj
-  V A n = ((A ×_) ↑ n) ⊤
+  -- Vectors (left- and right-pointing) and (perfect binary leaf) trees
+  -- Left-pointing needs many fewer parentheses, while right-pointing lets us
+  -- write most significant bit (MSB) on the right (as customary in many
+  -- cultures) while still giving easy access to LSB.
+  Vˡ Vʳ T : obj → ℕ → obj
+  Vˡ A n = ((_× A) ↑ n) ⊤
+  Vʳ A n = ((A ×_) ↑ n) ⊤
   T A n = ((λ z → z × z) ↑ n) A
 
 open Products ⦃ … ⦄ public

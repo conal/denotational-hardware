@@ -8,6 +8,7 @@ open import Data.Nat
 
 open import Categorical.Equiv
 open import Categorical.Raw
+open import Functions.Type
 open import Functions.Raw
 
 open import Examples.Add
@@ -15,9 +16,9 @@ open import Examples.Add
 bval : Bool → ℕ
 bval = bool 0 1
 
-val : ∀ n → V Bool n → ℕ
+val : ∀ n → Vˡ Bool n → ℕ
 val  zero      tt    = zero
-val (suc n) (b , bs) = bval b + val n bs * 2
+val (suc n) (bs , b) = bval b + val n bs * 2
 
 private
   add : ℕ × ℕ → ℕ
@@ -32,7 +33,10 @@ module halfAdd where
   i = bval ⊗ bval
 
   o : Bool × Bool → ℕ
-  o (s , cₒ) = val 2 (s , cₒ , tt)
+  o (cₒ , s) = val 2 ((tt , cₒ) , s)
+
+  -- TODO: Define _、_ to be *left-associative* _,_
+  -- I'll have to replace the current use of _、_
 
   _ : i (𝕗 , 𝕥) ≡ (0 , 1)
   _ = refl≡
@@ -54,41 +58,43 @@ module fullAdd where
   -- λ (c , (a , b)) → let (p , d) = halfAdd (a , b)
   --                       (q , e) = halfAdd (c , p) in (q , e ∨ d)
 
-  i : Bool × (Bool × Bool) → ℕ × (ℕ × ℕ)
-  i = bval ⊗ (bval ⊗ bval)
+  i : (Bool × Bool) × Bool → (ℕ × ℕ) × ℕ
+  i = (bval ⊗ bval) ⊗ bval
 
   o : Bool × Bool → ℕ
-  o (s , cₒ) = val 2 (s , cₒ , tt)
+  o (cₒ , s) = val 2 ((tt , cₒ) , s)
 
-  spec : o ∘ fullAdd ≈ (add ∘ second add) ∘ i
+  spec : o ∘ fullAdd ≈ (add ∘ first add) ∘ i
 
-  -- spec {c , (a , b)} = {!!}
+  spec {(𝕗 , 𝕗) , 𝕗} = refl≡
+  spec {(𝕗 , 𝕗) , 𝕥} = refl≡
+  spec {(𝕗 , 𝕥) , 𝕗} = refl≡
+  spec {(𝕗 , 𝕥) , 𝕥} = refl≡
+  spec {(𝕥 , 𝕗) , 𝕗} = refl≡
+  spec {(𝕥 , 𝕗) , 𝕥} = refl≡
+  spec {(𝕥 , 𝕥) , 𝕗} = refl≡
+  spec {(𝕥 , 𝕥) , 𝕥} = refl≡
 
-  spec {𝕗 , 𝕗 , 𝕗} = refl≡
-  spec {𝕗 , 𝕗 , 𝕥} = refl≡
-  spec {𝕗 , 𝕥 , 𝕗} = refl≡
-  spec {𝕗 , 𝕥 , 𝕥} = refl≡
-  spec {𝕥 , 𝕗 , 𝕗} = refl≡
-  spec {𝕥 , 𝕗 , 𝕥} = refl≡
-  spec {𝕥 , 𝕥 , 𝕗} = refl≡
-  spec {𝕥 , 𝕥 , 𝕥} = refl≡
+module rippleAdd where
 
-module rippleAdd (n : ℕ) where
+  -- rippleAdd : ∀ n → Vˡ (Bool × Bool) n ⇨ᶜ Vˡ Bool n
 
-  -- rippleAdd : ∀ n → V (Bool × Bool) n ⇨ᶜ V Bool n
-  -- rippleAdd = ripple fullAdd
+  module _ (n : ℕ) where
 
-  bvalⁿ : Bool → ℕ
-  bvalⁿ b = (2 ^ n) * bval b
+    bvalₙ : Bool → ℕ
+    bvalₙ b = (2 ^ n) * bval b
 
-  valⁿ : V Bool n → ℕ
-  valⁿ = val n
+    valₙ : Vˡ Bool n → ℕ
+    valₙ = val n
 
-  i : Bool × V (Bool × Bool) n → ℕ × (ℕ × ℕ)
-  i = bval ⊗ (valⁿ ⊗ valⁿ) ∘ unzipⱽ n
+    i : Vˡ (Bool × Bool) n × Bool → (ℕ × ℕ) × ℕ
+    i = (valₙ ⊗ valₙ) ∘ unzipⱽˡ n ⊗ bval
 
-  o : V Bool n × Bool → ℕ
-  o = add ∘ (valⁿ ⊗ bvalⁿ)
+    o : Bool × Vˡ Bool n → ℕ
+    o = add ∘ (bvalₙ ⊗ valₙ)
+
+  -- spec : ∀ n → o n ∘ rippleAdd n ≈ (add ∘ first add) ∘ i n
+  -- spec n = {!!}
 
 -- TODO: Replace ℕ by Fin (2 ^ n) throughout this module, and leave the carry
 -- bit as a bit.

@@ -27,21 +27,21 @@ open import Dot
 open import Ty.Utils
 open import Examples.Add
 
-shiftR-swap : ∀ {n} → Bool × V Bool n ⇨ Bool × V Bool n
+shiftR-swap : ∀ {n} → Bool × Vʳ Bool n ⇨ Bool × Vʳ Bool n
 shiftR-swap = swap ∘ shiftR
 
 -- General feedback right-shift register
-fsr : ∀ n → (V Bool n ⇨ Bool) → (V Bool n ⇨ V Bool n)
+fsr : ∀ n → (Vʳ Bool n ⇨ Bool) → (Vʳ Bool n ⇨ Vʳ Bool n)
 fsr _ f = shiftR⇃ ∘ (f ▵ id)
 
-linear : ∀ n → V Bool (suc n) → V Bool (suc n) ⇨ Bool
+linear : ∀ n → Vʳ Bool (suc n) → Vʳ Bool (suc n) ⇨ Bool
 linear zero (c , tt) = unitorᵉʳ
 linear (suc n) (c , cs) = (B.if c then xor else exr) ∘ second (linear n cs)
 
-lfsr : ∀ n → V Bool (suc n) → V Bool (suc n) ⇨ V Bool (suc n)
+lfsr : ∀ n → Vʳ Bool (suc n) → Vʳ Bool (suc n) ⇨ Vʳ Bool (suc n)
 lfsr n cs = fsr (suc n) (linear n cs)
 
-lfsr₅ : V Bool 6 ⇨ V Bool 6
+lfsr₅ : Vʳ Bool 6 ⇨ Vʳ Bool 6
 lfsr₅ = lfsr 5 (𝕥 , 𝕗 , 𝕗 , 𝕥 , 𝕗 , 𝕥 , tt)
 
 
@@ -63,19 +63,20 @@ main = run do
   -- example "not"       not
   -- example "and"       ∧
   -- example "nand"      (not ∘ ∧)
-  -- example "first-not" (first {b = V Bool 2} not)
+  -- example "first-not" (first {b = Vʳ Bool 2} not)
 
   -- example "shiftR-swap-c5" (shiftR-swap {5})
   -- example "lfsr-c5"  lfsr₅   -- wrong
 
-  -- example "half-add"     halfAdd
-  -- example "full-add"     fullAdd
-  -- example "ripple-add-4" (rippleAdd 4)
-  -- example "ripple-add-8" (rippleAdd 8)
+  example "half-add"     halfAdd
+  example "full-add"     fullAdd
+  example "ripple-add-4" (rippleAdd 4)
+  example "ripple-add-8" (rippleAdd 8)
 
-  -- example "carry-select-3x5" (carrySelect 3 5)
-  -- example "carry-select-4x4" (carrySelect 4 4)
-  -- example "carry-select-8x8" (carrySelect 8 8)
-  -- -- example "carry-select-16x16" (carrySelect 16 16)
+  example "carry-select-2x2" (carrySelect 2 2)
+  example "carry-select-3x5" (carrySelect 3 5)
+  example "carry-select-4x4" (carrySelect 4 4)
+  example "carry-select-8x8" (carrySelect 8 8)
+  -- example "carry-select-16x16" (carrySelect 16 16)
 
-  example "curry-and" (curry ∧)
+  -- example "curry-and" (curry ∧)
