@@ -32,10 +32,17 @@ add𝟚 k (cᵢ , a , b) rewrite +-identityʳ (2 ^ k) = cᵢ + a + b
 cons : {m : ℕ} → Fin 2 × Fin m → Fin (2 * m)
 cons {m} (b , i) rewrite +-identityʳ m = b + i + i
 
--- quotRem : ∀ {n} k → Fin (n ℕ.* k) → Fin k × Fin n
+-- quotRem : ∀ {n} k → Fin (n * k) → Fin k × Fin n
 
 cons⁻¹ : {m : ℕ} → Fin (2 * m) → Fin 2 × Fin m
 cons⁻¹ {m} i = swap (quotRem m i)
+
+cons∘cons⁻¹ : {m : ℕ} → cons {m} ∘ cons⁻¹ ≈ id
+cons∘cons⁻¹ = {!!}
+
+cons⁻¹∘cons : {m : ℕ} → cons⁻¹ ∘ cons {m} ≈ id
+cons⁻¹∘cons b = {!!}
+
 
 -- Bit vectors
 
@@ -58,6 +65,12 @@ bval⁻¹ : 𝟚 → 𝔹
 bval⁻¹ zero = 𝕗
 bval⁻¹ one  = 𝕥
 
+bval∘bval⁻¹ : bval ∘ bval⁻¹ ≈ id
+bval∘bval⁻¹ i = {!!}
+
+bval⁻¹∘bval : bval⁻¹ ∘ bval ≈ id
+bval⁻¹∘bval b = {!!}
+
 val : (k : ℕ) → 𝔹^ k → 𝟚^ k
 val  zero   = λ tt → zero
 val (suc k) = cons ∘ (bval ⊗ val k)
@@ -66,7 +79,11 @@ val⁻¹ : (k : ℕ) → 𝟚^ k → 𝔹^ k
 val⁻¹ zero zero = tt
 val⁻¹ (suc k) = (bval⁻¹ ⊗ val⁻¹ k) ∘ cons⁻¹
 
--- add𝟚 : ∀ k → 𝟚 × 𝟚^ k × 𝟚^ k → 𝟚^ suc k
+val∘val⁻¹ : ∀ k → val k ∘ val⁻¹ k ≈ id
+val∘val⁻¹ k i = {!!}
+
+val⁻¹∘val : ∀ k → val⁻¹ k ∘ val k ≈ id
+val⁻¹∘val k b = {!!}
 
 add𝔹₀ : ∀ k → 𝔹 × 𝔹^ k × 𝔹^ k → 𝔹^ suc k
 add𝔹₀ k = val⁻¹ (suc k) ∘ add𝟚 k ∘ (bval ⊗ val k ⊗ val k)
