@@ -3,12 +3,12 @@
 module Categorical.Laws where
 
 open import Level
+
+open import Categorical.Raw as R hiding (Category; Cartesian; CartesianClosed; Logic)
+open import Categorical.Equiv
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Function.Equivalence using (_⇔_; module Equivalence)
 open import Function.Equality using (_⟨$⟩_)
-
-open import Categorical.Raw as R hiding (Category; Cartesian; CartesianClosed)
-open import Categorical.Equiv
 open import Functions.Raw
 
 open Equivalence
@@ -187,4 +187,29 @@ record CartesianClosed {obj : Set o} ⦃ _ : Products obj ⦄
                        uncurry id
                      ∎)
 
--- TODO: Logic
+open CartesianClosed ⦃ … ⦄ public
+
+record Logic {obj : Set o} ⦃ _ : Products obj ⦄
+             ⦃ _ : Boolean obj ⦄ (_⇨′_ : obj → obj → Set ℓ)
+             {q} ⦃ _ : Equivalent q _⇨′_ ⦄
+             ⦃ _ : R.Cartesian _⇨′_ ⦄
+             ⦃ _ : R.Logic _⇨′_ ⦄
+       : Set (suc o ⊔ ℓ ⊔ suc q) where
+  private infix 0 _⇨_; _⇨_ = _⇨′_
+  field
+    ∨-idˡ : ∀ { any : ⊤ ⇨ Bool } → ∨ ∘ (true ▵ any) ≈ true
+    ∨-idʳ : ∀ { any : ⊤ ⇨ Bool } → ∨ ∘ (any ▵ true) ≈ true
+
+    ∧-idˡ : ∀ { any : ⊤ ⇨ Bool } → ∧ ∘ (false ▵ any) ≈ false
+    ∧-idʳ : ∀ { any : ⊤ ⇨ Bool } → ∧ ∘ (any ▵ false) ≈ false
+
+    de-morganŝ : not ∘ ∨ ≈ ∧ ∘ (not ⊗ not)
+    de-morganš : not ∘ ∧ ≈ ∨ ∘ (not ⊗ not)
+
+    not∘not≈id : not ∘ not ≈ id
+
+    -- -- A xor B ≈ ( A ∨ B ) ∧ (not ( A ∧ B ))
+    ∧∨-xor : xor ≈ ∧ ∘ (∨ ▵ not ∘ ∧)
+
+    condˡ : ∀ { f g : a ⇨ a } → cond ∘ (false ∘ ! ▵ (f ▵ g)) ≈ f
+    condʳ : ∀ { f g : a ⇨ a } → cond ∘ (true ∘ ! ▵ (f ▵ g)) ≈ g
