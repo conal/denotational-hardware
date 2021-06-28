@@ -85,23 +85,29 @@ val∘val⁻¹ k i = {!!}
 val⁻¹∘val : ∀ k → val⁻¹ k ∘ val k ≈ id
 val⁻¹∘val k b = {!!}
 
-add𝔹₀ : ∀ k → 𝔹 × 𝔹^ k × 𝔹^ k → 𝔹^ suc k
-add𝔹₀ k = val⁻¹ (suc k) ∘ add𝟚 k ∘ (bval ⊗ val k ⊗ val k)
-
-open import Level using (0ℓ)
-
-open import Categorical.Arrow Function 0ℓ
-open import Functions.Laws
-
 i : ∀ k → 𝔹 × 𝔹^ k × 𝔹^ k → 𝟚 × 𝟚^ k × 𝟚^ k
 i k = bval ⊗ val k ⊗ val k
 
 o : ∀ k → 𝔹^ suc k → 𝟚^ suc k
 o k = val (suc k)
 
-spec₀ : ∀ k → o k ∘ add𝔹₀ k ≈ add𝟚 k ∘ i k
-spec₀ k = {!!}
+-- Our goal
+add𝔹₀ : ∀ k → 𝔹 × 𝔹^ k × 𝔹^ k → 𝔹^ suc k
+
+open import Level using (0ℓ)
+
+open import Categorical.Arrow Function 0ℓ
+open import Functions.Laws
 
 -- Arrow category morphism
 arr₀ : ∀ k → i k ⇉ o k
-arr₀ k = mk (add𝔹₀ k) (add𝟚 k) (spec₀ k)
+arr₀ k = mk (add𝔹₀ k) (add𝟚 k) {!!}
+
+-- Goal : o k ∘ add𝔹₀ k ≈ add𝟚 k ∘ i k
+
+-- A first solution, by inverting o k:
+
+o⁻¹ : ∀ k → 𝟚^ suc k → 𝔹^ suc k
+o⁻¹ k = val⁻¹ (suc k)
+
+add𝔹₀ k = o⁻¹ k ∘ add𝟚 k ∘ i k
