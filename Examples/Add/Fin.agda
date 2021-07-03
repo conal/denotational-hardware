@@ -267,6 +267,9 @@ addFinsᶜ⇉ = mk addFinsᶜ adds toℕ-addFinsᶜ
 -- variants. I don't think 2 has any important role to play until we decide to
 -- go with boolean vectors and use logic to implement one-bit addition.
 
+-- I think quotRem⁻¹ is exactly what we want to decoding positional numbers,
+-- when we specialize m to k ^ p (base k with suc k digits).
+
 𝟚 : Set
 𝟚 = Fin 2
 
