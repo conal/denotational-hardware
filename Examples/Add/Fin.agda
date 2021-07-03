@@ -258,12 +258,12 @@ addFinsᶜ⇉ = mk addFinsᶜ adds toℕ-addFinsᶜ
 
 
 -------------------------------------------------------------------------------
--- 
+-- Rethinking the rest
 -------------------------------------------------------------------------------
 
 -- Then specialize to m ≡ n ≡ 2^k.
 
--- Or maybe not. Rethink the rest after we've made carry-out explicit in addFins
+-- Or maybe not. Revisit after we've made carry-out explicit in addFins
 -- variants. I don't think 2 has any important role to play until we decide to
 -- go with boolean vectors and use logic to implement one-bit addition.
 
