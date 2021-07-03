@@ -1,23 +1,26 @@
 module Examples.Add.Fin where
 
-open import Data.Product using (_,_)
-open import Data.Fin hiding (_+_)
+open import Data.Product using (_,_; uncurry)
+open import Data.Fin as 𝔽 hiding (_+_)
 open import Data.Fin.Properties
 open import Data.Nat as ℕ -- hiding (_+_; _*_)
 open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 
-open import Categorical.Raw
+open import Categorical.Raw hiding (uncurry)
 open import Functions
+open import Categorical.Arrow Function
 
 -- private variable m n : ℕ  -- TODO
 
-inject+′ : ∀ {m} n → Fin m → Fin (n ℕ.+ m)
-inject+′ {m} n j = subst Fin (+-comm m n) (inject+ n j)
-
 toℕ-subst : ∀ {m n} {eq : m ≡ n} {i : Fin m} → toℕ (subst Fin eq i) ≡ toℕ i
 toℕ-subst {eq = refl} = refl
+
+-- inject+ : ∀ {m} n → Fin m → Fin (m ℕ.+ n)
+
+inject+′ : ∀ {m} n → Fin m → Fin (n ℕ.+ m)
+inject+′ {m} n j = subst Fin (+-comm m n) (inject+ n j)
 
 toℕ-inject+′ : ∀ {m} n (j : Fin m) → toℕ j ≡ toℕ (inject+′ n j)
 toℕ-inject+′ {m} n j = trans (toℕ-inject+ n j) (sym toℕ-subst)
@@ -40,7 +43,7 @@ _⊹_ : ∀ {m n} → Fin (suc m) → Fin n → Fin (m + n)
 _⊹_ {m}{n}   zero   j = inject+′ m j
 _⊹_ {suc _} (suc i) j = suc (i ⊹ j)
 
--- TODO: redefine _⊹_ via Fin._+_.
+-- TODO: try redefining _⊹_ via Fin._+_.
 
 -- TODO: Could we work with Fin._+_ instead of _⊹_? What would we learn?
 
@@ -52,11 +55,9 @@ toℕ-⊹ : ∀ {m n} (i : Fin (suc m)) (j : Fin n)
 toℕ-⊹ {m} zero j = sym (toℕ-inject+′ m j)
 toℕ-⊹ {suc _} (suc i) j rewrite toℕ-⊹ i j = refl
 
-open import Categorical.Arrow Function
-
 -- Arrow category morphism
-+⇉ : ∀ {m n} → toℕ {suc m} ⊗ toℕ {n} ⇉ toℕ {m + n}
-+⇉ = mk (uncurry _⊹_) (uncurry _+_) λ (a , b) → toℕ-⊹ a b
+⊹⇉ : ∀ {m n} → toℕ {suc m} ⊗ toℕ {n} ⇉ toℕ {m + n}
+⊹⇉ = mk (uncurry _⊹_) (uncurry _+_) (uncurry toℕ-⊹)
 
 -- addition with carry-in
 addℕ : ℕ × ℕ × ℕ → ℕ
@@ -65,8 +66,7 @@ addℕ (c , a , b) = c + a + b
 addFin : ∀ {m n} → Fin 2 × Fin m × Fin n → Fin (m + n)
 addFin (cᵢ , a , b) = cᵢ ⊹ a ⊹ b
 
-toℕ-addFin : ∀ {m n} ((cᵢ , a , b) : Fin 2 × Fin m × Fin n)
-           → toℕ (addFin (cᵢ , a , b)) ≡ toℕ cᵢ + toℕ a + toℕ b
+toℕ-addFin : ∀ {m n} → toℕ ∘ addFin {m}{n} ≗ addℕ ∘ (toℕ ⊗ toℕ ⊗ toℕ)
 toℕ-addFin (cᵢ , a , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
 
 -- toℕ-addFin (cᵢ , a , b) =
@@ -80,7 +80,7 @@ toℕ-addFin (cᵢ , a , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a 
 --     toℕ cᵢ + toℕ a + toℕ b
 --   ∎
 
-addFin⇉ : ∀ {m n} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ {m + n}
+addFin⇉ : ∀ {m n} → toℕ ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ
 addFin⇉ = mk addFin addℕ toℕ-addFin
 
 
@@ -90,12 +90,18 @@ addFin⇉ = mk addFin addℕ toℕ-addFin
 addFin≡ : ∀ {m} → Fin 2 × Fin m × Fin m → Fin (2 * m)
 addFin≡ {m} w rewrite +-identityʳ m = addFin w
 
-toℕ-addFin≡ : ∀ {m} ((cᵢ , a , b) : Fin 2 × Fin m × Fin m)
-            → toℕ (addFin≡ (cᵢ , a , b)) ≡ toℕ cᵢ + toℕ a + toℕ b
+-- toℕ-addFin≡ : ∀ {m} ((cᵢ , a , b) : Fin 2 × Fin m × Fin m)
+--             → toℕ (addFin≡ (cᵢ , a , b)) ≡ toℕ cᵢ + toℕ a + toℕ b
+
+-- toℕ-addFin≡ : ∀ {m} ((cᵢ , a , b) : Fin 2 × Fin m × Fin m)
+--             → toℕ (addFin≡ (cᵢ , a , b)) ≡ addℕ ((toℕ ⊗ toℕ ⊗ toℕ) (cᵢ , a , b))
+
+toℕ-addFin≡ : ∀ {m} → toℕ ∘ addFin≡ {m} ≗ addℕ ∘ (toℕ ⊗ toℕ ⊗ toℕ)
 toℕ-addFin≡ {m} rewrite +-identityʳ m = toℕ-addFin
 
-addFin≡⇉ : ∀ {m} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ {2 * m}
+addFin≡⇉ : ∀ {m} → toℕ ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ
 addFin≡⇉ = mk addFin≡ addℕ toℕ-addFin≡
+
 
 -- Make carries more explicit
 
@@ -110,55 +116,32 @@ Cᵒ = _× 𝟚
 
 -- Compute with carry-in & carry-out
 infix 0 _→ᶜ_
+
 _→ᶜ_ : Set → Set → Set
 a →ᶜ b = Cⁱ a → Cᵒ b
 
--- ⟦_⟧ᵒ : ∀ {m} → Cᵒ (Fin m) → Fin (2 * m)
--- ⟦_⟧ᵒ {m} (a , o) = {!i ⊹ m * cᵢ!}
--- -- ⟦ cᵢ , i ⟧ᵒ = {!i ⊹ cᵢ * m!}
-
--- infixl 7 _✶_
--- _✶_ : Fin k → 
-
--- ⟦_⟧ᵒ : ∀ {k m} → Fin m × Fin k → Fin (k * m)
--- ⟦_⟧ᵒ {m} (a , o) = {!a ⊹ o * m!}
--- -- ⟦ cᵢ , i ⟧ᵒ = {!i ⊹ cᵢ * m!}
-
--- quotRem : ∀ {n} k → Fin (n * k) → Fin k × Fin n
-
--- quotRem⁻¹ : ∀ {n} k → Fin k × Fin n → Fin (n * k)
-
--- quotRem⁻¹ {suc _} k (i%k , zero) rewrite +-identityʳ k = i%k
--- quotRem⁻¹ {suc _} k (i%k , suc q) = {!q!}
-
--- quotRem⁻¹ k (i%k , zero) = {!i%k!}
--- quotRem⁻¹ k (i%k , suc q) = {!!}
-
--- quotRem⁻¹ k (i%k , i/k) = {!i%k ⊹ k * i/k!}
-
--- quotRem⁻¹ {.(suc _)} k (j , zero ) = {!!}
--- quotRem⁻¹ {.(suc _)} k (j , suc i) = {!!}
-
--- -- quotRem k "i" = "i % k" , "i / k"
--- quotRem : ∀ {n} k → Fin (n * k) → Fin k × Fin n
--- quotRem {suc n} k i with splitAt k i
--- ... | inj₁ j = j , zero
--- ... | inj₂ j = Product.map₂ suc (quotRem {n} k j)
-
--- addFinᶜ : ∀ {m} → 𝟚 × Fin m × Fin m → Fin m × 𝟚
--- addFinᶜ : ∀ {m} → Cⁱ (Fin m × Fin m) → Cᵒ (Fin m)
+-- _→ᶜ_ : {ℕ} → Set → Set → Set
+-- _→ᶜ_ {k} a b = Cⁱ a → Cᵒ b
 
 addFinᶜ : ∀ {m} → Fin m × Fin m →ᶜ Fin m
 addFinᶜ = quotRem _ ∘ addFin≡
 
+-- -- quotRem k "i" = "i % k" , "i / k"
+-- quotRem : ∀ {n} k → Fin (n * k) → Fin k × Fin n
 
--- WORKING HERE
+
+-- For inspiration, let's next consider adding more than two numbers:
 
 addFin₃ : ∀ {m n o} → Fin 3 × Fin m × Fin n × Fin o → Fin (m + n + o)
 addFin₃ (i , a , b , c) = i ⊹ a ⊹ b ⊹ c
 
 addFin₄ : ∀ {m n o p} → Fin 4 × Fin m × Fin n × Fin o × Fin p → Fin (m + n + o + p)
 addFin₄ (i , a , b , c , d) = i ⊹ a ⊹ b ⊹ c ⊹ d
+
+-- Aha! The carry in bound/type is the number of addends.
+-- Can we extend to a vector of addends? We'll want to accumulate from left to right (i.e., a left fold)
+
+-- Next, let's generalize this carry-in to a sum accumulator
 
 addFin₂′ : ∀ {i m n} → Fin (i + 2) × Fin m × Fin n → Fin (i + m + n)
 addFin₂′ {i} (cᵢ , a , b) rewrite +-comm i 2 = cᵢ ⊹ a ⊹ b
@@ -181,6 +164,9 @@ open import Data.Vec
 adds : ∀ {k} → ℕ × Vec ℕ k → ℕ
 adds (cᵢ , as) = cᵢ + sum as
 
+-- TODO: try re-defining `adds` as a *left* fold, initialized to cᵢ, to match
+-- the recursion structure of Fin sum. I bet the proofs below will simplify.
+
 addFins′ : ∀ {k i m} → Fin (k + i) × Vec (Fin m) k → Fin (k * m + i)
 addFins′ {zero}  (cᵢ ,   []  ) = cᵢ
 addFins′ {suc k}{i}{m} (cᵢ , a ∷ as) =
@@ -199,17 +185,20 @@ addFins′ {suc k}{i}{m} (cᵢ , a ∷ as) =
           suc k * m + i
         ∎
 
+-- The _+ i in the domain and codomain of addFins′ is fairly convenient to
+-- define, but it's less convenient to use, so commute them.
+
 addFins″ : ∀ {k i m} → Fin (i + k) × Vec (Fin m) k → Fin (i + k * m)
 addFins″ {k}{i}{m} rewrite +-comm i k | +-comm i (k * m) = addFins′
 
+-- Specialize to i = 0
 addFins : ∀ {k m} → Fin k × Vec (Fin m) k → Fin (k * m)
 addFins = addFins″
 
 -- -- Doesn't get there:
 -- addFins {k}{m} rewrite +-identityʳ k | +-identityʳ (k * m) = addFins′ {k}{zero}{m}
 
-toℕ-addFins′ : ∀ {k i m} ((cᵢ , as) : Fin (k + i) × Vec (Fin m) k)
-             → toℕ (addFins′ (cᵢ , as)) ≡ adds (toℕ cᵢ , map toℕ as)
+toℕ-addFins′ : ∀ {k i m} → toℕ ∘ addFins′ {k}{i}{m} ≗ adds ∘ (toℕ ⊗ map toℕ)
 toℕ-addFins′ {zero}  {i} {m} (cᵢ , []) rewrite +-identityʳ (toℕ cᵢ) = refl
 toℕ-addFins′ {suc k} {i} {m} (cᵢ , a ∷ as) =
   begin
@@ -234,20 +223,54 @@ toℕ-addFins′ {suc k} {i} {m} (cᵢ , a ∷ as) =
     adds (toℕ cᵢ , map toℕ (a ∷ as))
   ∎
 
-toℕ-addFins″ : ∀ {k i m} ((cᵢ , as) : Fin (i + k) × Vec (Fin m) k)
-             → toℕ (addFins″ (cᵢ , as)) ≡ adds (toℕ cᵢ , map toℕ as)
+-- TODO: Retry these proofs with a *left*-folding ℕ sum.
+
+toℕ-addFins″ : ∀ {k i m} → toℕ ∘ addFins″ {k}{i}{m} ≗ adds ∘ (toℕ ⊗ map toℕ)
 toℕ-addFins″ {k}{i}{m} rewrite +-comm i k | +-comm i (k * m) = toℕ-addFins′
 
-toℕ-addFins : ∀ {k m} ((cᵢ , as) : Fin k × Vec (Fin m) k)
-            → toℕ (addFins (cᵢ , as)) ≡ adds (toℕ cᵢ , map toℕ as)
+addFins″⇉ : ∀ {k i m} → toℕ {i + k} ⊗ map (toℕ {m}) ⇉ toℕ {i + k * m}
+addFins″⇉ {k} = mk addFins″ adds (toℕ-addFins″ {k})
+
+toℕ-addFins : ∀ {k m} → toℕ ∘ addFins {k}{m} ≗ adds ∘ (toℕ ⊗ map toℕ)
 toℕ-addFins = toℕ-addFins″
 
 addFins⇉ : ∀ {k m} → toℕ {k} ⊗ map (toℕ {m}) ⇉ toℕ {k * m}
 addFins⇉ = mk addFins adds toℕ-addFins
 
+-- -- Or skip explicitly specializing toℕ-addFins″ to toℕ-addFins:
+-- addFins⇉ : ∀ {k m} → toℕ {k} ⊗ map (toℕ {m}) ⇉ toℕ {k * m}
+-- addFins⇉ = mk addFins adds toℕ-addFins″
 
--- Now specialize to m ≡ n ≡ 2^k.
- 
+
+-- Working here. I want to make the carry-out explicit in addFins by reshaping
+-- Fin (k * m) to the isomorphic type Fin m × Fin k via quotRem. The arrow
+-- "decoder" will have to map back to Fin (k * m) to interpret the result. We
+-- thus need to define quotRem⁻¹ and prove at least one of the two isomorphism
+-- properties. I think quotRem⁻¹ will be defined via addFins, using repeated
+-- addition for multiplication.
+
+addFinsᶜ : ∀ {k m} → Fin k × Vec (Fin m) k → Fin m × Fin k
+addFinsᶜ = quotRem _ ∘ addFins
+
+-- addFins : ∀ {k m} → Fin k × Vec (Fin m) k → Fin (k * m)
+
+-- quotRem⁻¹ n%k n/k ≡ n%k + k * n/k ≡ n
+quotRem⁻¹ : ∀ {m k} → Fin m × Fin k → Fin (k * m)
+quotRem⁻¹ (j , i) = addFins (i , replicate j)
+
+-- quotRem⁻¹ = addFins ∘ second replicate ∘ swap
+
+-- Repe
+
+-------------------------------------------------------------------------------
+-- 
+-------------------------------------------------------------------------------
+
+-- Then specialize to m ≡ n ≡ 2^k.
+
+-- Or maybe not. Rethink the rest after we've made carry-out explicit in addFins
+-- variants. I don't think 2 has any important role to play until we decide to
+-- go with boolean vectors and use logic to implement one-bit addition.
 
 infix 10 𝟚^_
 𝟚^_ : ℕ → Set
