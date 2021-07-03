@@ -105,30 +105,20 @@ addFin≡⇉ = mk addFin≡ addℕ toℕ-addFin≡
 
 -- Make carries more explicit
 
-𝟚 : Set
-𝟚 = Fin 2
-
-Cⁱ Cᵒ : Set → Set
-Cⁱ = 𝟚 ×_
-Cᵒ = _× 𝟚
-
--- TODO: Maybe generalize Cⁱ and Cᵒ parametrizing over implicit k
+Cⁱ Cᵒ : ℕ → Set → Set
+Cⁱ k = Fin k ×_
+Cᵒ k = _× Fin k
 
 -- Compute with carry-in & carry-out
 infix 0 _→ᶜ_
-
-_→ᶜ_ : Set → Set → Set
-a →ᶜ b = Cⁱ a → Cᵒ b
-
--- _→ᶜ_ : {ℕ} → Set → Set → Set
--- _→ᶜ_ {k} a b = Cⁱ a → Cᵒ b
+_→ᶜ_ : {ℕ} → Set → Set → Set
+_→ᶜ_ {k} a b = Cⁱ k a → Cᵒ k b
 
 addFinᶜ : ∀ {m} → Fin m × Fin m →ᶜ Fin m
 addFinᶜ = quotRem _ ∘ addFin≡
 
 -- -- quotRem k "i" = "i % k" , "i / k"
 -- quotRem : ∀ {n} k → Fin (n * k) → Fin k × Fin n
-
 
 -- For inspiration, let's next consider adding more than two numbers:
 
@@ -242,25 +232,30 @@ addFins⇉ = mk addFins adds toℕ-addFins
 -- addFins⇉ = mk addFins adds toℕ-addFins″
 
 
--- Working here. I want to make the carry-out explicit in addFins by reshaping
--- Fin (k * m) to the isomorphic type Fin m × Fin k via quotRem. The arrow
--- "decoder" will have to map back to Fin (k * m) to interpret the result. We
--- thus need to define quotRem⁻¹ and prove at least one of the two isomorphism
--- properties. I think quotRem⁻¹ will be defined via addFins, using repeated
--- addition for multiplication.
+-- Next, make the carry-out explicit in addFins by reshaping Fin (k * m) to the
+-- isomorphic type Fin m × Fin k, i.e., Cᵒ k (Fin m).
 
-addFinsᶜ : ∀ {k m} → Fin k × Vec (Fin m) k → Fin m × Fin k
+addFinsᶜ : ∀ {k m} → Vec (Fin m) k →ᶜ Fin m
 addFinsᶜ = quotRem _ ∘ addFins
 
--- addFins : ∀ {k m} → Fin k × Vec (Fin m) k → Fin (k * m)
-
 -- quotRem⁻¹ n%k n/k ≡ n%k + k * n/k ≡ n
-quotRem⁻¹ : ∀ {m k} → Fin m × Fin k → Fin (k * m)
+
+-- quotRem⁻¹ : ∀ {m k} → Fin m × Fin k → Fin (k * m)
+
+quotRem⁻¹ : ∀ {m k} → Cᵒ k (Fin m) → Fin (k * m)
 quotRem⁻¹ (j , i) = addFins (i , replicate j)
 
 -- quotRem⁻¹ = addFins ∘ second replicate ∘ swap
 
--- Repe
+toℕᶜ : ∀ {k m} → Cᵒ k (Fin m) → ℕ
+toℕᶜ = toℕ ∘ quotRem⁻¹
+
+toℕ-addFinsᶜ : ∀ {k m} → toℕᶜ ∘ addFinsᶜ {k}{m} ≗ adds ∘ (toℕ ⊗ map toℕ)
+toℕ-addFinsᶜ = {!!}
+
+addFinsᶜ⇉ : ∀ {k m} → toℕ {k} ⊗ map (toℕ {m}) ⇉ toℕᶜ {k}{m}
+addFinsᶜ⇉ = mk addFinsᶜ adds toℕ-addFinsᶜ
+
 
 -------------------------------------------------------------------------------
 -- 
@@ -271,6 +266,9 @@ quotRem⁻¹ (j , i) = addFins (i , replicate j)
 -- Or maybe not. Rethink the rest after we've made carry-out explicit in addFins
 -- variants. I don't think 2 has any important role to play until we decide to
 -- go with boolean vectors and use logic to implement one-bit addition.
+
+𝟚 : Set
+𝟚 = Fin 2
 
 infix 10 𝟚^_
 𝟚^_ : ℕ → Set
