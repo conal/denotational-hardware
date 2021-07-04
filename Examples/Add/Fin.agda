@@ -85,6 +85,48 @@ addFin⇉ : ∀ {m n} → toℕ ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ
 addFin⇉ = mk addFin addℕ toℕ-addFin
 
 
+-- addition with carry-in
+addℕ′ : (ℕ × ℕ) × ℕ → ℕ
+addℕ′ ((c , a) , b) = c + a + b
+
+addFin′ : ∀ {m n} → (Fin 2 × Fin m) × Fin n → Fin (m + n)
+addFin′ ((cᵢ , a) , b) = cᵢ ⊹ a ⊹ b
+
+toℕ-addFin′ : ∀ {m n} → toℕ ∘ addFin′ {m}{n} ≗ addℕ′ ∘ ((toℕ ⊗ toℕ) ⊗ toℕ)
+toℕ-addFin′ ((cᵢ , a) , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
+
+addFin′⇉ : ∀ {m n} → (toℕ ⊗ toℕ {m}) ⊗ toℕ {n} ⇉ toℕ
+addFin′⇉ = mk addFin′ addℕ′ toℕ-addFin′
+
+-- Challenge: write addFin′ in terms of ⊹⇉.
+
+-- ⊹⇉ : ∀ {m n} → toℕ {suc m} ⊗ toℕ {n} ⇉ toℕ {m + n}
+-- ⊹⇉ = mk (uncurry _⊹_) (uncurry _+_) (uncurry toℕ-⊹)
+
+
+-- addition with carry-in
+addℕ″ : (ℕ × ℕ) × ℕ → ℕ
+-- addℕ″ ((c , a) , b) = c + a + b
+addℕ″ = uncurry _+_ ∘ first (uncurry _+_)
+
+addFin″ : ∀ {m n} → (Fin 2 × Fin m) × Fin n → Fin (m + n)
+addFin″ = uncurry _⊹_ ∘ first (uncurry _⊹_)
+-- addFin″ ((cᵢ , a) , b) = cᵢ ⊹ a ⊹ b
+
+-- toℕ-addFin″ : ∀ {m n} → toℕ ∘ addFin″ {m}{n} ≗ addℕ″ ∘ ((toℕ ⊗ toℕ) ⊗ toℕ)
+-- toℕ-addFin″ ((cᵢ , a) , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
+
+-- toℕ-addFin″ ((cᵢ , a) , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
+
+addFin″⇉ : ∀ {m n} → (toℕ {2} ⊗ toℕ {m}) ⊗ toℕ {n} ⇉ toℕ {m + n}
+addFin″⇉ {m}{n} = ⊹⇉ ∘ first ⊹⇉
+
+
+addFin‴⇉ : ∀ {m n} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ {m + n}
+addFin‴⇉ {m}{n} = ⊹⇉ ∘ first ⊹⇉ ∘ assocˡ
+
+
+
 -- Next, specialize to m ≡ n.
 
 -- Add like-bounded numbers
@@ -251,8 +293,53 @@ quotRem⁻¹ (j , i) = addFins (i , replicate j)
 toℕᶜ : ∀ {k m} → Cᵒ k (Fin m) → ℕ
 toℕᶜ = toℕ ∘ quotRem⁻¹
 
+open import Data.Sum hiding (map)
+
 quotRem⁻¹∘quotRem : ∀ {k m} → quotRem⁻¹ ∘ quotRem {k} m ≗ id
-quotRem⁻¹∘quotRem {suc k} {m} w = {!!}
+quotRem⁻¹∘quotRem {zero } {m} ()            -- TODO: remove
+
+-- quotRem⁻¹∘quotRem {suc k} {m} w
+--              = begin
+--                  quotRem⁻¹ (quotRem {suc k} m w)
+--                ≡⟨ {!!} ⟩
+--                  w
+--                ∎
+
+
+
+
+-- quotRem : ∀ {n} k → Fin (n ℕ.* k) → Fin k × Fin n
+-- quotRem {suc n} k i with splitAt k i
+-- ... | inj₁ j = j , zero
+-- ... | inj₂ j = Product.map₂ suc (quotRem {n} k j)
+
+
+
+quotRem⁻¹∘quotRem {suc k} {m} w with 𝔽.splitAt m w
+... | inj₁ i = begin
+                 {!quotRem⁻¹ (quotRem {suc k} m w)!}
+               ≡⟨ {!!} ⟩
+                 w
+               ∎
+... | inj₂ j = begin
+                 {!quotRem⁻¹ (quotRem {suc k} m w)!}
+               ≡⟨ {!!} ⟩
+                 w
+               ∎
+
+-- ... | inj₂ j = {!!}
+
+
+-- Goal: (addFins″ | suc k | sym (cong suc (+-identityʳ k)))
+--       (zero , i ∷ replicate i)
+--       ≡ w
+-- ————————————————————————————————————————————————————————————
+-- i : Fin m
+-- w : Fin (m + k * m)
+-- m : ℕ
+-- k : ℕ
+
+
 
 -- Idea: relate quotRem and div-mod. From `Data.Nat.DivMod`:
 -- 
