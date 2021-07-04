@@ -18,14 +18,17 @@ module Categorical.Comma.Raw
      {ℓ₃} (_⇨₃_ : obj₃ → obj₃ → Set ℓ₃) ⦃ _ : Cartesian _⇨₃_ ⦄
    {q} ⦃ _ : Equivalent q _⇨₃_ ⦄ ⦃ _ : L.Cartesian _⇨₃_ ⦄
    ⦃ _ : Homomorphismₒ obj₁ obj₃ ⦄ ⦃ _ : Homomorphism _⇨₁_ _⇨₃_ ⦄
-     ⦃ _ : CategoryH _⇨₁_ _⇨₃_ ⦄ ⦃ _ : ProductsH obj₁ _⇨₃_ ⦄
-     ⦃ _ : CartesianH _⇨₁_ _⇨₃_ ⦄
+     ⦃ catH₁ : CategoryH _⇨₁_ _⇨₃_ ⦄ ⦃ _ : ProductsH obj₁ _⇨₃_ ⦄
+     ⦃ cartH₁ : CartesianH _⇨₁_ _⇨₃_ ⦄
    ⦃ _ : Homomorphismₒ obj₂ obj₃ ⦄ ⦃ _ : Homomorphism _⇨₂_ _⇨₃_ ⦄
-     ⦃ _ : CategoryH _⇨₂_ _⇨₃_ ⦄ ⦃ _ : ProductsH obj₂ _⇨₃_ ⦄
-     ⦃ _ : CartesianH _⇨₂_ _⇨₃_ ⦄
+     ⦃ catH₂ : CategoryH _⇨₂_ _⇨₃_ ⦄ ⦃ _ : ProductsH obj₂ _⇨₃_ ⦄
+     ⦃ cartH₂ : CartesianH _⇨₂_ _⇨₃_ ⦄
  where
 
-open import Categorical.Comma.Type _⇨₁_ _⇨₂_ _⇨₃_ public
+open import Categorical.Comma.Type _⇨₁_ _⇨₂_ _⇨₃_
+       ⦃ catH₁ = catH₁ ⦄ ⦃ catH₂ = catH₂ ⦄
+     public
+
 open Obj
 
 private

@@ -27,14 +27,16 @@ module Categorical.Comma.Homomorphism
 
 open import Categorical.Comma.Raw _⇨₁_ _⇨₂_ _⇨₃_ public
 
-instance
+module comma-homomorphism-instances where
 
-  open import Categorical.Homomorphism
+  instance
 
-  categoryH₁ : CategoryH _⇨_ _⇨₁_
-  categoryH₁ = record { F-id = refl ; F-∘ = refl }
+    open import Categorical.Homomorphism
 
-  categoryH₂ : CategoryH _⇨_ _⇨₂_
-  categoryH₂ = record { F-id = refl ; F-∘ = refl }
+    categoryH₁ : CategoryH _⇨_ _⇨₁_
+    categoryH₁ = record { F-id = refl ; F-∘ = refl }
 
-  -- Also CartesianH, CartesianClosedH, and LogicH
+    categoryH₂ : CategoryH _⇨_ _⇨₂_
+    categoryH₂ = record { F-id = refl ; F-∘ = refl }
+
+    -- Also CartesianH, CartesianClosedH, and LogicH

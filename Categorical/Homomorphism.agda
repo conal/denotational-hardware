@@ -112,8 +112,19 @@ record CartesianH
     F-exr′ : {a b : obj₁} → Fₘ exr ≈ exr ∘ μ⁻¹ {a = a}{b}
     F-exr′ = introʳ μ∘μ⁻¹ ; ∘-assocˡ′ F-exr
 
-
 open CartesianH ⦃ … ⦄ public
+
+id-CartesianH : {obj : Set o} {_⇨_ : obj → obj → Set ℓ} ⦃ _ : Products obj ⦄
+                {q : Level} ⦃ _ : Equivalent q _⇨_ ⦄
+                ⦃ _ : Cartesian _⇨_ ⦄
+                ⦃ _ : L.Cartesian _⇨_ ⦄
+              → CartesianH _⇨_ _⇨_ ⦃ Hₒ = id-Hₒ ⦄ ⦃ H = id-H ⦄ ⦃ pH = id-ProductsH ⦄
+id-CartesianH = record
+  { F-!   = sym identityˡ
+  ; F-▵   = sym identityˡ
+  ; F-exl = identityʳ
+  ; F-exr = identityʳ
+  }
 
 record ExponentialsH
     (obj₁ : Set o₁) ⦃ _ : Exponentials obj₁ ⦄
