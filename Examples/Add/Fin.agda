@@ -19,6 +19,8 @@ toℕ-subst {eq = refl} = refl
 
 -- inject+ : ∀ {m} n → Fin m → Fin (m ℕ.+ n)
 
+-- toℕ-inject+ : ∀ {m} n (i : Fin m) → toℕ i ≡ toℕ (inject+ n i)
+
 inject+′ : ∀ {m} n → Fin m → Fin (n ℕ.+ m)
 inject+′ {m} n j = subst Fin (+-comm m n) (inject+ n j)
 
@@ -35,8 +37,6 @@ toℕ-inject+′ {m} n j = trans (toℕ-inject+ n j) (sym toℕ-subst)
 --     ≡⟨⟩
 --       toℕ (inject+′ n j)
 --     ∎
-
--- toℕ-inject+ : ∀ {m} n (i : Fin m) → toℕ i ≡ toℕ (inject+ n i)
 
 infixl 6 _⊹_
 _⊹_ : ∀ {m n} → Fin (suc m) → Fin n → Fin (m + n)
@@ -58,6 +58,7 @@ toℕ-⊹ {suc _} (suc i) j rewrite toℕ-⊹ i j = refl
 -- Arrow category morphism
 ⊹⇉ : ∀ {m n} → toℕ {suc m} ⊗ toℕ {n} ⇉ toℕ {m + n}
 ⊹⇉ = mk (uncurry _⊹_) (uncurry _+_) (uncurry toℕ-⊹)
+
 
 -- addition with carry-in
 addℕ : ℕ × ℕ × ℕ → ℕ
@@ -242,7 +243,7 @@ addFinsᶜ = quotRem _ ∘ addFins
 
 -- quotRem⁻¹ : ∀ {m k} → Fin m × Fin k → Fin (k * m)
 
-quotRem⁻¹ : ∀ {m k} → Cᵒ k (Fin m) → Fin (k * m)
+quotRem⁻¹ : ∀ {k m} → Cᵒ k (Fin m) → Fin (k * m)
 quotRem⁻¹ (j , i) = addFins (i , replicate j)
 
 -- quotRem⁻¹ = addFins ∘ second replicate ∘ swap
@@ -250,8 +251,47 @@ quotRem⁻¹ (j , i) = addFins (i , replicate j)
 toℕᶜ : ∀ {k m} → Cᵒ k (Fin m) → ℕ
 toℕᶜ = toℕ ∘ quotRem⁻¹
 
+quotRem⁻¹∘quotRem : ∀ {k m} → quotRem⁻¹ ∘ quotRem {k} m ≗ id
+quotRem⁻¹∘quotRem {suc k} {m} w = {!!}
+
+-- Idea: relate quotRem and div-mod. From `Data.Nat.DivMod`:
+-- 
+-- m≡m%n+[m/n]*n : ∀ m n → m ≡ m % suc n + (m / suc n) * suc n
+-- m≡m%n+[m/n]*n m n = div-mod-lemma 0 0 m n
+
+open import Data.Nat.DivMod using (_/_; _%_)
+open import Relation.Nullary.Decidable using (False)
+
+-- quotRemℕ : ℕ → ℕ → ℕ × ℕ
+quotRemℕ : ∀ (m : ℕ) {≢0 : False (m ℕ.≟ 0)} → ℕ → ℕ × ℕ
+quotRemℕ m {≢0} i = _%_ i m {≢0} , _/_ i m {≢0}
+
+-- -- quotRem k "i" = "i % k" , "i / k"
+-- quotRem : ∀ {n} k → Fin (n * k) → Fin k × Fin n
+
+-- -- quotRem m "i" = "i % m" , "i / m"
+-- quotRem : ∀ {n} m → (i : Fin (n * m)) → Fin m × Fin n
+
+toℕ-quotRem : ∀ {n m} {i : Fin (n * m)} {≢0 : False (m ℕ.≟ 0)}
+            → (toℕ ⊗ toℕ) (quotRem {n} m i) ≡ quotRemℕ m {≢0} (toℕ i)
+toℕ-quotRem = {!!}
+
+
 toℕ-addFinsᶜ : ∀ {k m} → toℕᶜ ∘ addFinsᶜ {k}{m} ≗ adds ∘ (toℕ ⊗ map toℕ)
-toℕ-addFinsᶜ = {!!}
+toℕ-addFinsᶜ {k}{m} (cᵢ , v) =
+  begin
+    toℕᶜ (addFinsᶜ (cᵢ , v))
+  ≡⟨⟩
+    toℕ (quotRem⁻¹ (addFinsᶜ (cᵢ , v)))
+  ≡⟨⟩
+    toℕ (quotRem⁻¹ {k} (quotRem m (addFins (cᵢ , v))))
+  ≡⟨ cong toℕ (quotRem⁻¹∘quotRem {k} (addFins (cᵢ , v))) ⟩
+    toℕ (addFins (cᵢ , v))
+  ≡⟨ toℕ-addFins (cᵢ , v) ⟩
+    adds (toℕ cᵢ , map toℕ v)
+  ≡⟨⟩
+    adds ((toℕ ⊗ map toℕ) (cᵢ , v))
+  ∎
 
 addFinsᶜ⇉ : ∀ {k m} → toℕ {k} ⊗ map (toℕ {m}) ⇉ toℕᶜ {k}{m}
 addFinsᶜ⇉ = mk addFinsᶜ adds toℕ-addFinsᶜ
