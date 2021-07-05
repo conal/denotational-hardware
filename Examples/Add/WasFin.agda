@@ -142,7 +142,7 @@ addFin≡ {m} w rewrite +-identityʳ m = addFin w
 toℕ-addFin≡ : ∀ {m} → toℕ ∘ addFin≡ {m} ≗ addℕ ∘ (toℕ ⊗ toℕ ⊗ toℕ)
 toℕ-addFin≡ {m} rewrite +-identityʳ m = toℕ-addFin
 
-addFin≡⇉ : ∀ {m} → toℕ ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ
+addFin≡⇉ : ∀ {m} → toℕ ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ {2 * m}
 addFin≡⇉ = mk addFin≡ addℕ toℕ-addFin≡
 
 

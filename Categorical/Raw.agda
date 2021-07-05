@@ -20,6 +20,10 @@ record Category {obj : Set o} (_⇨_ : obj → obj → Set ℓ) : Set (o ⊔ ℓ
     id  : a ⇨ a
     _∘_ : {a b c : obj} → (g : b ⇨ c) (f : a ⇨ b) → (a ⇨ c)
 
+  open import Relation.Binary.PropositionalEquality
+  id≡ : (a≡b : a ≡ b) → a ⇨ b
+  id≡ refl = id
+
 open Category ⦃ … ⦄ public
 
 

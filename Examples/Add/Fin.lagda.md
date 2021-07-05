@@ -1,5 +1,5 @@
 ```agda
-module Examples.Add.LitFin where
+module Examples.Add.Fin where
 
 open import Data.Product using (_,_; uncurry)
 open import Data.Fin as 𝔽 hiding (_+_) renaming (Fin to 𝔽)
@@ -176,65 +176,27 @@ Still not as simple as I want.
 Here's an idea: write `adds` (the specification) in categorical style.
 Then imitate for the `𝔽` version and its correctness proof.
 
-First, write out the left fold explicitly:
+First, write out the left fold explicitly, switching from `Vec` to `V` (made of standard products):
 
 ```agda
-adds₂ : ∀ {k} → ℕ × Vec ℕ k → ℕ
-adds₂ {zero } (cᵢ ,   []  ) = cᵢ
-adds₂ {suc k} (cᵢ , a ∷ as) = adds₂ (cᵢ + a , as)
-
--- TODO: Rename adds to _+Σ_ and add𝔽s to _⊹Σ_.
--- Oops: if I switch from Vec to V, I'll have to make k explicit.
--- Maybe I can insert V/Vec adapters instead.
-
 open import Data.Unit
 
 adds₃ : ∀ k → ℕ × V ℕ k → ℕ
 adds₃ zero (cᵢ , tt) = cᵢ
 adds₃ (suc k) (cᵢ , a , as) = adds₃ k (cᵢ + a , as)
+```
 
--- In categorical language
+Now switch to categorical language:
 
+```agda
 adds₄ : ∀ k → ℕ × V ℕ k → ℕ
 adds₄  zero   = unitorᵉʳ
 adds₄ (suc k) = adds₄ k ∘ first (uncurry _+_) ∘ assocˡ
-
--- Overall: unitorᵉʳ ∘ first ⟨+⟩ ∘ assocˡ ∘ ⋯ ∘ first ⟨+⟩ ∘ assocˡ
-
-
--- Convert Vec to V incrementally
-
-un[] : ∀ {a} → Vec a zero → V a zero
-un[] [] = tt
-
-un∷ : ∀ {a n} → Vec a (suc n) → a × Vec a n
-un∷ (a ∷ as) = a , as
-
-adds₅ : ∀ k → ℕ × Vec ℕ k → ℕ
-adds₅  zero   = unitorᵉʳ ∘ second un[]
-adds₅ (suc k) = adds₅ k ∘ first (uncurry _+_) ∘ assocˡ ∘ second un∷
-
--- Convert Vec to V up front
-
-toV : ∀ {k}{a} → Vec a k → V a k
-toV [] = tt
-toV (a ∷ as) = a , toV as
-
-adds₆ : ∀ {k} → ℕ × Vec ℕ k → ℕ
-adds₆ {k} = adds₄ k ∘ second toV
-
--- Restyled
-
-toV′ : ∀ {k}{a} → Vec a k → V a k
-toV′ {zero } = un[]
-toV′ {suc k} = second toV′ ∘ un∷
-
-adds₇ : ∀ {k} → ℕ × Vec ℕ k → ℕ
-adds₇ {k} = adds₄ k ∘ second toV′
 ```
-Okay, back to it.
 
-First define *one step* of `add𝔽s`.
+Overall: we have `unitorᵉʳ ∘ first ⟨+⟩ ∘ assocˡ ∘ ⋯ ∘ first ⟨+⟩ ∘ assocˡ`, where `⟨+⟩ = uncurry _+_`.
+
+Next define *one step* of `add𝔽s`.
 
 ```agda
 add𝔽ᶜ-suc : ∀ {j k m : ℕ}
@@ -244,21 +206,30 @@ add𝔽ᶜ-suc {j}{k}{m} rewrite sym (+-comm (j * m) m) | sym (+-assoc k (j * m)
   first (uncurry _⊹_) ∘ assocˡ
 ```
 
-Use `add𝔽ᶜ-suc` to redefine `add𝔽s`:
+Then use `add𝔽ᶜ-suc` to redefine `add𝔽s`:
 
 ```agda
 add𝔽s₃ : ∀ {j k m} → 𝔽 (k + j * m) × V (𝔽 m) k → 𝔽 ((k + j) * m)
-add𝔽s₃ {j}{zero }{m} = unitorᵉʳ
-add𝔽s₃ {j}{suc k}{m} = id≡ eq ∘ add𝔽s₃ {suc j}{k}{m} ∘ add𝔽ᶜ-suc {j}
+add𝔽s₃ {j}{zero } = unitorᵉʳ
+add𝔽s₃ {j}{suc k}{m} = id≡ eq ∘ add𝔽s₃ {suc j}{k} ∘ add𝔽ᶜ-suc {j}
  where
    eq : 𝔽 ((k + suc j) * m) ≡ 𝔽 ((suc k + j) * m)
    eq rewrite +-suc k j = refl
    -- eq = cong (λ i → 𝔽 (i * m)) (+-suc k j)
 ```
 
+Much simpler!
+I think we're getting somewhere.
+
+I just added `id≡` as a definition (not field) in the `Category` class, as an alternative to `subst` and `rewrite`:
+
+```agdaQ
+  id≡ : (a≡b : a ≡ b) → a ⇨ b
+  id≡ refl = id
+```
+
 Hm! `add𝔽ᶜ-suc` is a *dependently typed state transition function*
 Correspondingly, `add𝔽s₃` is almost the dependently typed execution of the corresponding Mealy machine, but it generates the final state instead of the intermediate outputs.
-
 I guess a better description is a *dependently typed left fold*.
 
 We could eliminate `id≡ eq` here with the help of a somewhat hairy `subst`.
