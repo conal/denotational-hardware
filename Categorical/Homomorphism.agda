@@ -6,7 +6,7 @@ open import Level
 
 open import Categorical.Raw public
 open import Categorical.Laws as L
-       hiding (Category; Cartesian; CartesianClosed)
+       hiding (Category; Cartesian; CartesianClosed; Logic)
 open import Categorical.Reasoning
 
 private

@@ -50,12 +50,38 @@ module →-laws-instances where
         ; curry≈ = λ f≈g x → extensionality λ y → f≈g (x , y)
         }
 
-    logic : Logic Function zero
+    logic : Logic Function
     logic = record
-      { ∨-idˡ = λ x → refl≡
-      ; ∨-idʳ = ∨-idʳ-aux
+      { ∨-commutative = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; ∧-commutative = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; xor-commutative = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; ∨-annihilatorˡ = λ x → refl≡
+      ; ∧-annihilatorˡ = λ x → refl≡
+      ; ∨-idˡ = λ x → refl≡
       ; ∧-idˡ = λ x → refl≡
-      ; ∧-idʳ = ∧-idʳ-aux
+      ; ∨-idempotence = λ
+          { 𝕗 → refl≡
+          ; 𝕥 → refl≡
+          }
+      ; ∧-idempotence = λ
+          { 𝕗 → refl≡
+          ; 𝕥 → refl≡
+          }
       ; de-morganŝ = λ
           { (𝕗 , 𝕗) → refl≡
           ; (𝕗 , 𝕥) → refl≡
