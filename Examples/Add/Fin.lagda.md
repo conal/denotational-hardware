@@ -18,6 +18,7 @@ First declare our module and import needed functionality from other modules:
 ```agda
 module Examples.Add.Fin where
 
+open import Data.Unit
 open import Data.Product using (_,_; uncurry)
 open import Data.Fin as 𝔽 hiding (_+_) renaming (Fin to 𝔽)
 open import Data.Fin.Properties
@@ -56,7 +57,7 @@ toℕ-inject+′ {m} n j = trans toℕ-subst (sym (toℕ-inject+ n j))
 ## Adding two numbers
 
 A (bounded) number `a : 𝔽 n` can be any of `0, ..., n - 1`.
-If we add `a : 𝔽 m` to `b : 𝔽 n`, then `a ≤ m - 1` and `b ≤ n - 1`, so `a + b ≤ m + n - 2`, i.e., has type `𝔽 (m + n - 1)`.
+If we add `a : 𝔽 m` to `b : 𝔽 n`, then `0 ≤ a ≤ m - 1` and `0 ≤ b ≤ n - 1`, so `0 ≤ a + b ≤ m + n - 2`, i.e., has type `𝔽 (m + n - 1)`.
 
 Well, not exactly.
 `ℕ` has no negatives and so does not have subtraction in the way we might expect.
@@ -94,7 +95,7 @@ We now have five crucial pieces of information:
 5.  a mapping of implementation output to specification output.
 
 These five pieces are all aspects of a single, meaningful assembly, so let's wrap them into a convenient package to take with us and relate to other such assemblies.
-Parts 4 and 5 are about the inputs and outputs and their semantic relationship, so we'll make them the domain and codomain of the assembly, i.e., its interface.
+Parts 4 and 5 are about the inputs and outputs and their semantic relationship and so will become the domain and codomain of the assembly, i.e., its interface.
 Parts 1, 2, and 3 become the details behind that interface:
 
 ```agda
@@ -103,10 +104,10 @@ Parts 1, 2, and 3 become the details behind that interface:
 ```
 
 ::: aside
-*To do:* define `mk′` to take curried ops, and use in place of `mk` & `uncurry`.
+*To do:* define `mk′` to take curried operations, and use in place of `mk` & `uncurry`.
 :::
 
-The symbol "`_⇉_`" was chosen to suggest a kind of mapping, belonging to a category such that
+The symbol "`_⇉_`" was chosen to suggest a kind of mapping, belonging to a category in which
 
 *   *objects* (the sorts of inputs and outputs for the category) are data mappings (parts 4 & 5 above); and
 *   *morphisms* (the connections/mappings in the category) are pairs of functions (parts 1 and 2 above)---which can really be morphisms from *any* category---that satisfy a "commuting diagram" (part 3 above).
@@ -116,7 +117,7 @@ This construction is known as an "[arrow category](https://en.wikipedia.org/wiki
 ## A dance for three
 
 The `ℕ` and `𝔽` types are *unary* representations, built up from `zero` by repeated applications of `suc`(cessor), as defined by Giuseppe Peano in the late 19th century.
-This representation is convenient for reasoning but computationally inefficient in size of representation and cost of arithmetic operations.
+This representation is logically convenient but computationally inefficient in size of representation and cost of arithmetic operations.
 
 In [positional number systems](https://en.wikipedia.org/wiki/Positional_notation) (such as base ten or base two), representations are succinct, and operations are efficient---at the cost of some complexity.
 For this reason, we will work our way toward implementing positional systems, defining their meanings via `𝔽`, which itself is defined via its meaning `ℕ`.
@@ -124,14 +125,13 @@ We could relate positional systems to `ℕ` directly, but there are useful insig
 By pausing at each step and giving focused attention to our surroundings, we foster understanding and appreciation of the jewels we encounter.
 
 When we add two digits (whether in base ten or base two), the result can be too large to denote with a single digit.
-For this reason, digit addition produces not only a digit but an overflow---or "carry-out"---value.
-No matter what the base, the carry-out is either zero or one, which is to say it has type `𝔽 2`, or a "bit", not a digit.
-(Digits and bits only coincide in base two.)
+For this reason, digit addition produces not only a digit but an overflow---or "carry-out"---value as well.
+No matter what the base, the carry-out is either zero or one, which is to say it is a `𝔽 2`, or a "bit", not a digit.
+(Digits and bits coincide only in base two.)
 
 When we move *leftward* from digit to digit (since we write the least significant digit on the right and most significant on the left), we "carry out" the carry-out bit into the next digit addition, where it becomes the "carry-in" bit of the next (more significant) digit addition.
 
-In this way, digit addition becomes "a dance for three" (as Carlo Rovelli [says](https://www.goodreads.com/book/show/55801224-helgoland) of quantum entanglement and relative information), not two:
-
+In this way, digit addition becomes "a dance for three" (as [Carlo Rovelli says](https://www.goodreads.com/book/show/55801224-helgoland) of quantum entanglement and relative information):
 
 ```agda
 add𝔽₀ : ∀ {m n} → 𝔽 2 × 𝔽 m × 𝔽 n → 𝔽 (m + n)
@@ -165,7 +165,7 @@ Now note that each aspect of `add𝔽⇉₀` is made from the corresponding comp
 *   Add the first pair, yielding `(cᵢ + a , b)`.
 *   Add the result, yielding `(cᵢ + a) + b`.
 
-Using categorical operations, we can thus define `add𝔽⇉` directly via `⊹⇉` rather than via ingredients of `⊹⇉`:
+Using categorical operations, we can thus define `add𝔽⇉` directly via `⊹⇉` rather than defining the ingredients of `add𝔽⇉` via the ingredients of `⊹⇉`:
 
 ```agda
 add𝔽⇉ : ∀ {m n} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ {m + n}
@@ -173,8 +173,8 @@ add𝔽⇉ = ⊹⇉ ∘ first ⊹⇉ ∘ assocˡ
 ```
 
 *Whee!*
-We've used the `Category` and `Cartesian` instances for comma categories (including their arrow category specialization) to combine our implementation-specification-proof packages, both in sequence and in parallel.
-(There's not much parallel here yet, but eventually there will be much more.)
+We've used the `Category` and `Cartesian` instances for comma categories (including their arrow category specialization) to compose our implementation-specification-proof packages, both in sequence and in parallel.
+(There's only a hint of the parallel here yet, but eventually there will be much more.)
 Those two instances encapsulate the knowledge of how to perform these two foundational kinds of compositions and a few other useful operations as well.
 
 ::: aside
@@ -184,7 +184,7 @@ Those two instances encapsulate the knowledge of how to perform these two founda
 ## Adding many numbers
 
 Next, let's extend our ambition from two summands (and carry-in) to any number of them, collected in a vector.
-To simplify matters, let's assume that vector is uniformly bounded, i.e., all addends other than carry-in have the same bound.
+To simplify matters, assume that vector is uniformly bounded, i.e., all addends other than carry-in have the same bound.
 
 ::: aside
 This assumption lets us use a uniform vector type (all elements having the same type and hence bound).
@@ -195,16 +195,17 @@ One motivation to reach for adding many numbers is simply the challenge---to up 
 As we'll see, though, interesting and useful insights will emerge from the effort.
 The essential challenge is in expressing clearly the bounds involved.
 
-For any `m : ℕ`, the sum of two values bounded by `m` is at most `2 * m - 1`.
+For any `m : ℕ`, the sum of two values bounded by `m` is at most `2 * (m - 1) ≡ 2 * m - 2`.
 Well, not exactly (as we noted above), because `ℕ` lacks a suitable notion of subtraction (i.e., one that has the relationship to substitution on `ℤ` that makes reasoning easy and useful).
 We got around that problem neatly by introducing a carry-in bit, which happens to be needed for efficient, positional number systems.
 
-When we're adding not just two but three `m`-bounded numbers, the sum is at most `3 * m - 2`.
-When adding `k` such numbers, the sum is at most `k * m - (k - 1)`.
+When we're adding not just two but three `m`-bounded numbers, the sum is at most `3 * m - 3`.
+When adding `k` such numbers, the sum is at most `k * m - k`.
 Oh dear---subtraction again :scream_cat:.
 
 Can we extend the carry-in trick to find our way back to type simplicity?
-Yes, by allowing the carry-in to be at most `k - 1`, i.e., to have type `Fin k`:
+Yes, by allowing the carry-in to be at most `k - 1`, i.e., to have type `Fin k`.
+Then the sum is at most `(k * m - k) + (k - 1) ≡ k * m - 1`, i.e., has type `Fin (k * m)`:
 
 ```agdaQ
 add𝔽s : ∀ {k m} → 𝔽 k × Vec (𝔽 m) k → 𝔽 (k * m)
@@ -213,12 +214,12 @@ add𝔽s : ∀ {k m} → 𝔽 k × Vec (𝔽 m) k → 𝔽 (k * m)
 ::: aside
 What we've discovered here is that the carry-in bound has nothing to do with the addend (e.g., digit) bounds, but rather is the number of addends.
 As a special case, for a single "summand" (`k ≡ 1`), the carry-in type is `𝔽 1`, which contains only `zero`.
-The result has the same bound and the same value as lonely summand, since `(𝔽 1 × Vec (𝔽 m) 1 → 𝔽 (1 * m)) ≅ (𝔽 m → 𝔽 m)`.
-An even weirder special case is no summands at all, when the carry-bit type `𝔽 0` is uninhabited.
+The result has the same bound and the same value as the lonely summand, since `(𝔽 1 × Vec (𝔽 m) 1 → 𝔽 (1 * m)) ≅ (𝔽 m → 𝔽 m)`.
+An even weirder special case is no summands at all, for which the carry-bit type `𝔽 0` is uninhabited.
 This case "works", too, since `(𝔽 0 × Vec (𝔽 m) 0 → 𝔽 (0 * m)) ≅ ⊥ → ⊥`, which has just one inhabitant.
 :::
 
-Because we are accumulating from the left, the "carry-in" value grows by absorbing successive summands as we move through the vector.
+As we move rightward through the vector (which, confusingly, corresponds to moving *lefward* in our familiar positional numeric notations), the "carry-in" value grows by absorbing successive summands as .
 For this reason, while initially of type `𝔽 k`, we will have to leave room to grow (even as `k` shrinks).
 As a first guess, let's try the following type, adding a new parameter `i` to help bound the accumulator.
 
@@ -292,18 +293,18 @@ Or cancel our subscription, learn from experience, and try something else.
 
 ## Seeking simplicity
 
-The definitions above are far too complicated for my tastes; perhaps yours as well.
+The definitions above are far too complicated for my tastes; perhaps for yours as well.
 Seeking simplicity, we can look for ways to build up `add𝔽s⇉` from `⊹⇉` *compositionally*, as we did when rewriting `add𝔽₀` as `add𝔽`.
+Following our earlier success, let's pursue the following plan:
 
-Here's an idea: rewrite `addℕs` (part 2 of the packing list above) in categorical style.
-Then imitate the new form in the `𝔽` counterpart (part 1) and correctness proof (part 3) for appropriate data interpretations (parts 4 & 5).
-Then combine all five parts into a single package.
+*   Rewrite `addℕs` (part 2 of the packing list above) in categorical style.
+*   Imitate the new form in the `𝔽` counterpart (part 1) and correctness proof (part 3) for appropriate data interpretations (parts 4 & 5).
+*   Combine all five parts into a single package.
+*   Review what we've done, and replace it all with a single categorical recipe that assembles the package compositionally.
 
 First, switch from `Vec` to `V` (an isomorphic, recursively defined type made with standard products), and write out the left fold explicitly:
 
 ```agda
-open import Data.Unit
-
 addℕs₁ : ∀ k → ℕ × V ℕ k → ℕ
 addℕs₁ zero (cᵢ , tt) = cᵢ
 addℕs₁ (suc k) (cᵢ , a , as) = addℕs₁ k (cᵢ + a , as)
@@ -321,7 +322,7 @@ We could have used `exl` (left projection) for the `zero` case, but `unitorᵉʳ
 
 ::: aside
 Unitors are available in monoidal categories, which do not provide for duplicating or destroying information.
-Non-cartesian, monoidal categories include reversible computations, which suggest an answer to the [unavoidably heat-generating](https://en.wikipedia.org/wiki/Landauer%27s_principle) (diabatic) nature of the current dominant paradigm of irreversible computing.
+Non-cartesian, monoidal categories include reversible computations, which suggest a remedy for the [unavoidably heat-generating](https://en.wikipedia.org/wiki/Landauer%27s_principle) (diabatic) nature of the current dominant paradigm of irreversible computing.
 :::
 
 Unrolling the loop, we get `unitorᵉʳ ∘ first ⟨+⟩ ∘ assocˡ ∘ ⋯ ∘ first ⟨+⟩ ∘ assocˡ`, where `⟨+⟩ = uncurry _+_`.
@@ -330,9 +331,6 @@ Can we imitate this form for `𝔽`?
 
 We can start by defining *one step* of `add𝔽s`, going from the sum of `k` addends (in addition to carry-in) to the sum of `k+1`.
 For additional precision, we can replace the accumulated `i` from above with `j * m`.
-As we march forward, `j` counts how many vector elements we've met and gratefully absorbed, and `k` counts how many more we can gleefully anticipate.
-As `j` ascends from `zero`, `k` descends to `zero`, always in perfect balance ☯.
-Ultimately, we offer a well-digested summary of our encounters.
 
 ```agda
 add𝔽ᶜ-suc : ∀ {j k m : ℕ}
@@ -355,6 +353,10 @@ add𝔽s₁ {j}{suc k}{m} = id≡ eq ∘ add𝔽s₁ {suc j}{k} ∘ add𝔽ᶜ-s
 
 (We could phrase that last line more explicitly as `eq = cong (λ i → 𝔽 (i * m)) (+-suc k j)`.)
 
+As we march forward, `j` counts how many vector elements we've met and gratefully absorbed, while `k` counts how many more we can gleefully anticipate.
+As `j` ascends from `zero`, `k` descends to `zero`, always in perfect balance ☯.
+Ultimately, we offer a well-digested summary of our encounters.
+
 Much simpler!
 I think we're getting somewhere.
 
@@ -364,6 +366,21 @@ The `id≡` function  used here (a definition---not field---in the `Category` cl
   id≡ : a ≡ b → a ⇨ b
   id≡ refl = id
 ```
+
+::: aside
+We can eliminate `id≡ eq` here with the help of a somewhat hairy `subst` or via `rewrite`.
+After a few attempts, I came up with the following:
+
+```agda
+add𝔽s₂ : ∀ {j k m} → 𝔽 (k + j * m) × V (𝔽 m) k → 𝔽 ((k + j) * m)
+add𝔽s₂ {j}{zero }{m} = unitorᵉʳ
+add𝔽s₂ {j}{suc k}{m} rewrite sym (cong (_* m) (+-suc k j)) =
+  add𝔽s₂ {suc j}{k}{m} ∘ add𝔽ᶜ-suc {j}
+```
+
+Without the `cong`, type-checking failed.
+Maybe it needed just a bit more context to avoid some harmful rewrites.
+:::
 
 ::: aside
 It feels right to me that this `add𝔽s₁` definition looks like a *dependently typed left fold*, since its purpose is to implement the simply typed left fold in the definition of `addℕs`, while refining (the simply typed) `ℕ` into (the dependently typed) `𝔽`.
@@ -382,21 +399,6 @@ This pattern doesn't seem quite general enough, since we're simultaneously decre
 On the other hand, maybe `add𝔽s₁` could be rephrased to fit comfortably.
 :::
 
-::: aside
-We can eliminate `id≡ eq` here with the help of a somewhat hairy `subst` or via `rewrite`.
-After a few attempts, I came up with the following:
-
-```agda
-add𝔽s₂ : ∀ {j k m} → 𝔽 (k + j * m) × V (𝔽 m) k → 𝔽 ((k + j) * m)
-add𝔽s₂ {j}{zero }{m} = unitorᵉʳ
-add𝔽s₂ {j}{suc k}{m} rewrite sym (cong (_* m) (+-suc k j)) =
-  add𝔽s₂ {suc j}{k}{m} ∘ add𝔽ᶜ-suc {j}
-```
-
-Without the `cong`, type-checking failed.
-Maybe it needed just a bit more context to avoid some harmful rewrites.
-:::
-
 ## Still to come
 
 There are more places to visit on our journey.
@@ -409,4 +411,4 @@ Some we can imagine from here:
 *   Multiplication
 *   Circuit design and verification
 
-Others will surprise us.
+These adventures and more await us.
