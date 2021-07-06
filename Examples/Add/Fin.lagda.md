@@ -1,9 +1,9 @@
 ---
-title: Fun with finites
+title: Composing correct constructions categorically
 author: Conal Elliott
 ---
 
-# Fun with finites
+# Composing correct constructions categorically
 
 This chapter is one step in a journey to construct machine-verified hardware design in a simple, principled manner.
 
