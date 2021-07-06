@@ -330,7 +330,9 @@ Can we imitate this form for `𝔽`?
 
 We can start by defining *one step* of `add𝔽s`, going from the sum of `k` addends (in addition to carry-in) to the sum of `k+1`.
 For additional precision, we can replace the accumulated `i` from above with `j * m`.
-As we march forward, `j` counts how many vector elements we've met and gratefully absorbed, and `k` counts how many more we can gleefully anticipate, with `j` growing from `zero` and `k` shrinking as `zero`, always in perfect balance ☯.
+As we march forward, `j` counts how many vector elements we've met and gratefully absorbed, and `k` counts how many more we can gleefully anticipate.
+As `j` ascends from `zero`, `k` descends to `zero`, always in perfect balance ☯.
+Ultimately, we offer a well-digested summary of our encounters.
 
 ```agda
 add𝔽ᶜ-suc : ∀ {j k m : ℕ}
