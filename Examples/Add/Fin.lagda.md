@@ -172,13 +172,17 @@ add𝔽⇉ : ∀ {m n} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ {m + 
 add𝔽⇉ = ⊹⇉ ∘ first ⊹⇉ ∘ assocˡ
 ```
 
-*Whee!*
 We've used the `Category` and `Cartesian` instances for comma categories (including their arrow category specialization) to compose our implementation-specification-proof packages, both in sequence and in parallel.
 (There's only a hint of the parallel here yet, but eventually there will be much more.)
 Those two instances encapsulate the knowledge of how to perform these two foundational kinds of compositions and a few other useful operations as well.
 
 ::: aside
 *To do*: define a cartesian category of equality proofs, and rewrite `addℕ`, `add𝔽`, `toℕ-add𝔽` (renamed "`add≡`"), *and* `add𝔽⇉` all in the same form.
+
+Hm. It doesn't seem possible to make equality proofs cartesian, since the cartesian operations relate different types.
+Even monoidal can allow at most isomorphism.
+
+There is a simpler alternative, namely a category of morphism equivalences, which I think is a subcategory of an arrow category.
 :::
 
 ## Adding many numbers
@@ -379,7 +383,7 @@ add𝔽s₂ {j}{suc k}{m} rewrite sym (cong (_* m) (+-suc k j)) =
 ```
 
 Without the `cong`, type-checking failed.
-Maybe it needed just a bit more context to avoid some harmful rewrites.
+Maybe it needed just a bit more context to avoid some harmful uses.
 :::
 
 ::: aside
@@ -405,7 +409,7 @@ There are more places to visit on our journey.
 Some we can imagine from here:
 
 *   Packaging `addℕs`, `add𝔽s`, and a corresponding proof into `add𝔽s⇉`
-*   Revealing carry-out and its use to decompose addition
+*   Revealing carry-out and its use in decomposing addition
 *   Efficient addition via positional number representations
 *   Various recipes for sequential and parallel addition and their hybrids
 *   Multiplication
