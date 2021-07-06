@@ -176,15 +176,6 @@ We've used the `Category` and `Cartesian` instances for comma categories (includ
 (There's only a hint of the parallel here yet, but eventually there will be much more.)
 Those two instances encapsulate the knowledge of how to perform these two foundational kinds of compositions and a few other useful operations as well.
 
-::: aside
-*To do*: define a cartesian category of equality proofs, and rewrite `addℕ`, `add𝔽`, `toℕ-add𝔽` (renamed "`add≡`"), *and* `add𝔽⇉` all in the same form.
-
-Hm. It doesn't seem possible to make equality proofs cartesian, since the cartesian operations relate different types.
-Even monoidal can allow at most isomorphism.
-
-There is a simpler alternative, namely a category of morphism equivalences, which I think is a subcategory of an arrow category.
-:::
-
 ## Adding many numbers
 
 Next, let's extend our ambition from two summands (and carry-in) to any number of them, collected in a vector.
