@@ -1,3 +1,15 @@
+# Fun with finites!
+
+This chapter is one step in a journey to construct machine-verified hardware design in a simple, principled manner.
+
+We'll start with addition on statically bounded natural numbers, as provided by the [`Data.Fin`](https://agda.github.io/agda-stdlib/Data.Fin.html) module in [the Agda standard library](https://github.com/agda/agda-stdlib).
+(Most of the functionality is re-exported from [`Data.Fin.Base`](https://agda.github.io/agda-stdlib/Data.Fin.Base.html).)
+The defining module calls these types `Fin n` (for `n : ℕ`), but we'll rename them to `𝔽 n` for the code below.
+
+## Some preliminaries
+
+First declare our module and import needed functionality from other modules:
+
 ```agda
 module Examples.Add.Fin where
 
@@ -14,37 +26,74 @@ open import Functions
 open import Categorical.Arrow Function
 ```
 
-Some utilities:
+`Data.Fin` provides a way to increase a number's bound:
+
+```agdaQ
+inject+ : ∀ {m} n → 𝔽 m → 𝔽 (m ℕ.+ n)
+```
+
+(Decreasing is trickier.)
+`Data.Fin.Properties` tells us that `inject+` only changes the upper bound, while leaving value of that number unchanged:
+
+```agdaQ
+toℕ-inject+ : ∀ {m} n (i : 𝔽 m) → toℕ i ≡ toℕ (inject+ n i)
+```
+
+It will be convenient to use a tweaked signature for `inject+`, and to reverse the direction of `toℕ-inject+`.
 
 ```agda
-toℕ-subst : ∀ {m n} {eq : m ≡ n} {i : 𝔽 m} → toℕ (subst 𝔽 eq i) ≡ toℕ i
-toℕ-subst {eq = refl} = refl
-
--- inject+ : ∀ {m} n → 𝔽 m → 𝔽 (m ℕ.+ n)
--- toℕ-inject+ : ∀ {m} n (i : 𝔽 m) → toℕ i ≡ toℕ (inject+ n i)
-
 inject+′ : ∀ {m} n → 𝔽 m → 𝔽 (n ℕ.+ m)
 inject+′ {m} n j = subst 𝔽 (+-comm m n) (inject+ n j)
 
-toℕ-inject+′ : ∀ {m} n (j : 𝔽 m) → toℕ j ≡ toℕ (inject+′ n j)
-toℕ-inject+′ {m} n j = trans (toℕ-inject+ n j) (sym toℕ-subst)
+toℕ-subst : ∀ {m n} {eq : m ≡ n} {i : 𝔽 m} → toℕ (subst 𝔽 eq i) ≡ toℕ i
+toℕ-subst {eq = refl} = refl
+
+toℕ-inject+′ : ∀ {m} n (j : 𝔽 m) → toℕ (inject+′ n j) ≡ toℕ j
+toℕ-inject+′ {m} n j = trans toℕ-subst (sym (toℕ-inject+ n j))
 ```
 
-Let's start with `𝔽` addition and its relationship to `ℕ` addition:
+## Adding two numbers
+
+A bounded number `a : 𝔽 n` can be any of `0, ..., n - 1`.
+If we add `a : 𝔽 m` to `b : 𝔽 n`, so `a ≤ m - 1` and `b ≤ n - 1` and thus `a + b ≤ m + n - 2`, i.e., has type `𝔽 (m + n - 1)`.
+
+Well, not exactly, because `ℕ` has no negatives and so does not have subtraction in the way we might expect.
+Instead, we'll require `m > 0` (although we could instead require `n > 0`).
+We could tweak addition to ask for a proof that `m > 0`, but we'd need to make the result more complex as well.
+Instead, we can choose a *simpler* type:
 
 ```agda
 infixl 6 _⊹_
 _⊹_ : ∀ {m n} → 𝔽 (suc m) → 𝔽 n → 𝔽 (m + n)
-_⊹_ {m}{n}   zero   j = inject+′ m j
+_⊹_ {m}      zero   j = inject+′ m j
 _⊹_ {suc _} (suc i) j = suc (i ⊹ j)
+```
 
-toℕ-⊹ : ∀ {m n} (i : 𝔽 (suc m)) (j : 𝔽 n)
-      → toℕ (i ⊹ j) ≡ toℕ i + toℕ j
-toℕ-⊹ {m} zero j = sym (toℕ-inject+′ m j)
+The name of this function suggests that it implements addition, and indeed it does, in the following sense:
+
+```agda
+toℕ-⊹ : ∀ {m n} (i : 𝔽 (suc m)) (j : 𝔽 n) → toℕ (i ⊹ j) ≡ toℕ i + toℕ j
+toℕ-⊹ {m} zero j = toℕ-inject+′ m j
 toℕ-⊹ {suc _} (suc i) j rewrite toℕ-⊹ i j = refl
 ```
 
-Now assemble the implementation, specification, and proof into a category morphism:
+Let's consider the *meaning* of an `𝔽` value to be the corresponding `ℕ`, as given by `toℕ`.
+Then `toℕ-⊹` says that the meaning of an sum of `𝔽` values is the sum of the meanings of those values.
+The property has a sort of rhyme to it that may sound familiar if you've seen abstract algebra and various examples of *homomorphisms*.
+
+## Packaging it all up to go
+
+We now have five crucial pieces of information:
+
+1.  an *implementation* (`_⊹_`),
+2.  a specification (`_+_`), and
+3.  a proof of their consistency with respect to
+4.  a mapping of implementation input to specification input and
+5.  a mapping of implementation output to specification output.
+
+These five pieces are all aspects of a single, meaningful assembly, so let's package them to be convenient to take with us and relate to other such assemblies.
+Parts 4 and 5 are about the inputs and outputs and their semantic relationship, so we'll make them the domain and codomain of the assembly, i.e., its interface.
+Parts 1, 2, and 3 become the details behind that interface:
 
 ```agda
 ⊹⇉ : ∀ {m n} → toℕ {suc m} ⊗ toℕ {n} ⇉ toℕ {m + n}
@@ -53,56 +102,92 @@ Now assemble the implementation, specification, and proof into a category morphi
 
 *To do:* define `mk′` to take curried ops, and use in place of `mk` & `uncurry`.
 
-Next, play the same game with carry-in:
+The symbol "`_⇉_`" was chosen to suggest a kind of mapping, and belongs to a category such that
+
+*   *objects* (the sorts of inputs and outputs for the category) are data mappings (parts 4 & 5 above); and
+*   *morphisms* (the connections/mappings in the category) are pairs of functions (parts 1 and 2 above)---which can really be morphisms from *any* category---that satisfy a "commuting diagram" (part 3 above).
+
+This construction is known as an "[arrow category](https://en.wikipedia.org/wiki/Comma_category#Arrow_category)".
+
+## A dance for three
+
+The `ℕ` and `𝔽` types are *unary* representations, built up from `zero` by repeated applications of `suc`(cessor), as defined by Giuseppe Peano in the late 19th century.
+This representation is convenient for reasoning but computationally inefficient in size of representation and cost of arithmetic operations.
+
+In [positional number systems](https://en.wikipedia.org/wiki/Positional_notation) (such as base ten or base two), representations are succinct, and operations are efficient---at the cost of some complexity.
+For this reason, we will work our way toward implementing positional systems, defining their meanings via `𝔽`, which itself is defined via its meaning `ℕ`.
+We could relate positional systems to `ℕ` directly, but there are useful insights to be gained in each step of the journey.
+Giving each our focused attention fosters our understanding and appreciation of the jewels we encounter.
+
+When we add two digits (whether in base ten or base two), the result can be too large to denote with a single digit.
+For this reason, digit addition produces not only a digit but a "carry-out" value.
+No matter what the base, the carry-out is either zero or one, which is to say it has type `𝔽 2`, or a "bit", not a digit.
+(Digits and bits only coincide in base two.)
+
+When we move *leftward* from digit to digit (since we write the least significant digit on the right and most significant on the left), we "carry out" the carry-out bit into the next digit addition, where it becomes a "carry-in" bit of the next (more significant) digit addition.
+
+In this way, digit addition becomes "a dance for three" (as Carlo Rovelli [says](https://www.goodreads.com/book/show/55801224-helgoland) of quantum entanglement and relative information), not two:
+
+
+```agda
+add𝔽₀ : ∀ {m n} → 𝔽 2 × 𝔽 m × 𝔽 n → 𝔽 (m + n)
+add𝔽₀ (cᵢ , a , b) = cᵢ ⊹ a ⊹ b
+```
+
+Note how `add𝔽₀` replaces the `𝔽 (suc m)` argument to `_⊹_` by a `𝔽 2` and a `𝔽 m`.
+These two arguments then get added to yield `𝔽 (suc m)` (since `2 ≡ suc (suc zero)`), which is then added to a `𝔽 n` to get a `F (m + n)`.
+
+We'll want to know that `add𝔽₀` correctly implements something and what that something is, so let's repeat our packaging game.
+A natural meaning is adding three unfettered natural numbers (not troubling them or ourselves with bounds), which we can prove correct and tie up in a neat package:
 
 ```agda
 addℕ : ℕ × ℕ × ℕ → ℕ
 addℕ (c , a , b) = c + a + b
 
-add𝔽 : ∀ {m n} → 𝔽 2 × 𝔽 m × 𝔽 n → 𝔽 (m + n)
-add𝔽 (cᵢ , a , b) = cᵢ ⊹ a ⊹ b
+toℕ-add𝔽₀ : ∀ {m n} → toℕ ∘ add𝔽₀ {m}{n} ≗ addℕ ∘ (toℕ ⊗ toℕ ⊗ toℕ)
+toℕ-add𝔽₀ (cᵢ , a , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
 
-toℕ-add𝔽 : ∀ {m n} → toℕ ∘ add𝔽 {m}{n} ≗ addℕ ∘ (toℕ ⊗ toℕ ⊗ toℕ)
-toℕ-add𝔽 (cᵢ , a , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
-
-add𝔽′⇉ : ∀ {m n} → toℕ ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ
-add𝔽′⇉ = mk add𝔽 addℕ toℕ-add𝔽
+add𝔽⇉₀ : ∀ {m n} → toℕ ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ
+add𝔽⇉₀ = mk add𝔽₀ addℕ toℕ-add𝔽₀
 ```
 
-Now note that each component of `add𝔽⇉` can be built from the corresponding component of `⊹⇉`, using essentially the same recipe:
+This time the correctness condition (the type of `toℕ-add𝔽`) in given in succinct, point-free style, using sequential composition (`_∘_`), parallel composition (`_⊗_`), and existential equality of functions (`_≗_`).
+
+When reading the definitions above, it helps to know that `_+_` is left-associative, while `_×_`, `_,_`, and `_⊗_` are all right-associative.
+
+Now note that each aspect of `add𝔽⇉₀` is made from the corresponding component of `⊹⇉`, using essentially the same recipe:
 
 *   Left-associate `(cᵢ , a , b)` to `((cᵢ , a) , b)`.
 *   Add the first pair, yielding `(cᵢ + a , b)`.
 *   Add the result, yielding `(cᵢ + a) + b`.
 
-Using categorical operations, we can thus define `add𝔽⇉` directly via `⊹⇉` (rather than via ingredients of `⊹⇉`), as follows:
+Using categorical operations, we can thus define `add𝔽⇉` directly via `⊹⇉` rather than via ingredients of `⊹⇉`:
 
 ```agda
 add𝔽⇉ : ∀ {m n} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ {m + n}
 add𝔽⇉ = ⊹⇉ ∘ first ⊹⇉ ∘ assocˡ
 ```
 
-Whee! We've used the `Category` and `Cartesian` instances for comma categories (including their arrow category specialization) to simultaneously combine implementations, specifications, and proofs.
+*Whee!*
+We've used the `Category` and `Cartesian` instances for comma categories (including their arrow category specialization) to combine our implementation-specification-proof packages, both in sequence and in parallel.
+Those two instances encapsulate the knowledge of how to perform these two kinds of compositions and a few other useful operations as well.
 
-Next, specialize to `m ≡ n`:
+::: aside
+*To do*: define a cartesian category of equality proofs, and rewrite `addℕ`, `add𝔽`, `toℕ-add𝔽` (renamed "`add≡`"), *and* `add𝔽⇉` all in the same form.
+:::
 
-```agda
-add𝔽≡⇉′ : ∀ {m} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ {2 * m}
-add𝔽≡⇉′ {m} rewrite +-identityʳ m = add𝔽⇉
-```
+## Adding many numbers
 
-Next, let's extend from to summands (and carry-in) to any number of summands:
+Next, let's extend from two summands (and carry-in) to any number, collected in a vector.
+Things are about to get wild, but I promise you that they'll calm down soon.
 
 ```agda
 open import Data.Vec
 
-adds : ∀ {k} → ℕ × Vec ℕ k → ℕ
-adds = uncurry (foldl _ _+_)
-
-add𝔽s : ∀ {k i m} → 𝔽 (k + i) × Vec (𝔽 m) k → 𝔽 (k * m + i)
-add𝔽s {zero} (cᵢ , []) = cᵢ
-add𝔽s {suc k}{i}{m} (cᵢ , a ∷ as) =
-  subst 𝔽 eq (add𝔽s (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as))
+add𝔽s₀ : ∀ {k i m} → 𝔽 (k + i) × Vec (𝔽 m) k → 𝔽 (k * m + i)
+add𝔽s₀ {zero} (cᵢ , []) = cᵢ
+add𝔽s₀ {suc k}{i}{m} (cᵢ , a ∷ as) =
+  subst 𝔽 eq (add𝔽s₀ (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as))
  where
    eq : k * m + (i + m) ≡ suc k * m + i
    eq = begin
@@ -117,19 +202,22 @@ add𝔽s {suc k}{i}{m} (cᵢ , a ∷ as) =
           suc k * m + i
         ∎
 
-toℕ-add𝔽s : ∀ {k i m} → toℕ ∘ add𝔽s {k}{i}{m} ≗ adds ∘ (toℕ ⊗ map toℕ)
-toℕ-add𝔽s {zero } {i} {m} (cᵢ , []) rewrite +-identityʳ (toℕ cᵢ) = refl
-toℕ-add𝔽s {suc k} {i} {m} (cᵢ , a ∷ as) =
+adds₀ : ∀ {k} → ℕ × Vec ℕ k → ℕ
+adds₀ = uncurry (foldl _ _+_)
+
+toℕ-add𝔽s₀ : ∀ {k i m} → toℕ ∘ add𝔽s₀ {k}{i}{m} ≗ adds₀ ∘ (toℕ ⊗ map toℕ)
+toℕ-add𝔽s₀ {zero } {i} {m} (cᵢ , []) rewrite +-identityʳ (toℕ cᵢ) = refl
+toℕ-add𝔽s₀ {suc k} {i} {m} (cᵢ , a ∷ as) =
   begin
-    toℕ (add𝔽s (cᵢ , a ∷ as))
+    toℕ (add𝔽s₀ (cᵢ , a ∷ as))
   ≡⟨⟩
-    toℕ (subst 𝔽 _ (add𝔽s (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as)))
+    toℕ (subst 𝔽 _ (add𝔽s₀ (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as)))
   ≡⟨ toℕ-subst ⟩
-    toℕ (add𝔽s (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as))
-  ≡⟨ toℕ-add𝔽s (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as) ⟩
-    adds (toℕ (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a)) , map toℕ as)
-  ≡⟨ cong (λ z → adds (z , map toℕ as)) toℕ-subst ⟩
-    adds (toℕ (cᵢ ⊹ a) , map toℕ as)
+    toℕ (add𝔽s₀ (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as))
+  ≡⟨ toℕ-add𝔽s₀ (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a) , as) ⟩
+    adds₀ (toℕ (subst 𝔽 (+-assoc k i m) (cᵢ ⊹ a)) , map toℕ as)
+  ≡⟨ cong (λ z → adds₀ (z , map toℕ as)) toℕ-subst ⟩
+    adds₀ (toℕ (cᵢ ⊹ a) , map toℕ as)
   ≡⟨⟩
     foldl _ _+_ (toℕ (cᵢ ⊹ a)) (map toℕ as)
   ≡⟨ cong (λ z → foldl _ _+_ z (map toℕ as)) (toℕ-⊹ cᵢ a) ⟩
@@ -137,29 +225,34 @@ toℕ-add𝔽s {suc k} {i} {m} (cᵢ , a ∷ as) =
   ≡⟨⟩
     foldl _ _+_ (toℕ cᵢ) (map toℕ (a ∷ as))
   ≡⟨⟩
-    adds (toℕ cᵢ , map toℕ (a ∷ as))
+    adds₀ (toℕ cᵢ , map toℕ (a ∷ as))
   ∎
 
-add𝔽s′⇉ : ∀ {k i m} → toℕ {k + i} ⊗ map {n = k} (toℕ {m}) ⇉ toℕ {k * m + i}
-add𝔽s′⇉ = mk add𝔽s adds toℕ-add𝔽s
-
-add𝔽s⇉ : ∀ {k i m} → toℕ {i + k} ⊗ map {n = k} (toℕ {m}) ⇉ toℕ {i + k * m}
-add𝔽s⇉ {k}{i}{m} rewrite +-comm i k | +-comm i (k * m)= add𝔽s′⇉
+add𝔽s⇉₀ : ∀ {k i m} → toℕ {k + i} ⊗ map {n = k} (toℕ {m}) ⇉ toℕ {k * m + i}
+add𝔽s⇉₀ = mk add𝔽s₀ adds₀ toℕ-add𝔽s₀
 ```
 
-Yow!
-Those definitions far too complicated for my taste.
-I want instead to build up `add𝔽s⇉` from `⊹⇉`, compositionally.
-Look for more decomposable formulations.
+Phew!
+With considerable effort, we made it.
+
+Unfortunately, math and code are not things we put behind us when written.
+In addition to purchase cost, we now have an ongoing paid subscription to complexity :grimacing:.
+We must reason through it over and over---both individually and collectively---as we build from here.
+
+## Seeking simplicity
+
+The definitions above are far too complicated for my tastes.
+Let's instead look for ways to build up `add𝔽s⇉` from `⊹⇉` *compositionally*, as we did we rewrote `add𝔽₀` as `add𝔽`.
+Let's look for more decomposable formulations.
 
 First, try changing the carry-in to account for being partway into a summation, having accumulated `j` addends with `k` more to go.
 
 ```agda
-add𝔽s₂ : ∀ {j k m} → 𝔽 (j * m + k) × Vec (𝔽 m) k → 𝔽 ((j + k) * m)
-add𝔽s₂ {j} {zero } {m} (cᵢ , [])
+add𝔽s₁ : ∀ {j k m} → 𝔽 (j * m + k) × Vec (𝔽 m) k → 𝔽 ((j + k) * m)
+add𝔽s₁ {j} {zero } {m} (cᵢ , [])
   rewrite +-identityʳ j | +-identityʳ (j * m) = cᵢ
-add𝔽s₂ {j} {suc k} {m} (cᵢ , a ∷ as) =
-   subst 𝔽 eq₃ (add𝔽s₂ {suc j}{k}{m} (cᵢ′ , as))
+add𝔽s₁ {j} {suc k} {m} (cᵢ , a ∷ as) =
+   subst 𝔽 eq₃ (add𝔽s₁ {suc j}{k}{m} (cᵢ′ , as))
  where
    eq₁ : j * m + suc k ≡ suc (j * m + k)
    eq₁ = +-suc (j * m) k
@@ -171,10 +264,11 @@ add𝔽s₂ {j} {suc k} {m} (cᵢ , a ∷ as) =
    cᵢ′ = subst 𝔽 eq₂ (subst 𝔽 eq₁ cᵢ ⊹ a)
 ```
 
-Still not as simple as I want.
+Still not as simple as I want. :frowning:
 
-Here's an idea: write `adds` (the specification) in categorical style.
+Here's an idea: rewrite `adds₀` (the specification) in categorical style.
 Then imitate for the `𝔽` version and its correctness proof.
+Then replace them all with a single package.
 
 First, write out the left fold explicitly, switching from `Vec` to `V` (made of standard products):
 
