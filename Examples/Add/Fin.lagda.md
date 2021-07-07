@@ -405,12 +405,11 @@ Then specialize with `j ≡ zero`:
 add𝔽s⇉ : ∀ {k m} → toℕ {k} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {k * m}
 add𝔽s⇉ {k}{m} = subst (λ z → toℕ {z} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {z * m})
                       (+-identityʳ k)
-                (add𝔽s⇉′ {0}{k}{m})
+                  (add𝔽s⇉′ {0})
 ```
 
-I hoped to for a simpler-looking version using `rewrite` instead of `subst`.
-The following attempt doesn't satisfy the type-checker:
-
+I hoped for a simpler-looking version using `rewrite` instead of `subst`.
+The following attempt doesn't type-check:
 ```agdaQ
 add𝔽s⇉ : ∀ {k m} → toℕ {k} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {k * m}
 add𝔽s⇉ {k}{m} rewrite +-identityʳ k = add𝔽s⇉′ {0}{k}{m}
