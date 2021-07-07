@@ -388,11 +388,10 @@ The recipes for `add𝔽ᶜ-suc` and `add𝔽s₂` are written in a form that co
 Since we have arrow (`⇉`) versions of all of these building blocks, we can use these same recipes to build arrow versions of `add𝔽ᶜ-suc` and `add𝔽s₁`, thus establishing the meaning of `add𝔽s₂` as `addℕs`:
 
 ```agda
-add𝔽ᶜ-suc⇉ : ∀ {j k m : ℕ}
+add𝔽ᶜ-suc⇉ : ∀ {j k m}
            →   toℕ {suc k + j * m} ⊗ mapⱽ (suc k) (toℕ {m})
              ⇉ toℕ {k + suc j * m} ⊗ mapⱽ k (toℕ {m})
-add𝔽ᶜ-suc⇉ {j}{k}{m} rewrite sym (+-comm (j * m) m)
-                           | sym (+-assoc k (j * m) m) =
+add𝔽ᶜ-suc⇉ {j}{k}{m} rewrite sym (+-comm (j * m) m) | sym (+-assoc k (j * m) m) =
   first ⊹⇉ ∘ assocˡ
 
 add𝔽s⇉ : ∀ {j k m}
@@ -408,7 +407,6 @@ add𝔽s⇉ {j} {suc k} {m} rewrite sym (cong (_* m) (+-suc k j)) =
 There are more places to visit on our journey.
 Some we can imagine from here:
 
-*   Packaging `addℕs`, `add𝔽s`, and a corresponding proof into `add𝔽s⇉`
 *   Revealing carry-out and its use in decomposing addition
 *   Efficient addition via positional number representations
 *   Various recipes for sequential and parallel addition and their hybrids
