@@ -1,15 +1,15 @@
 ---
-title: Composing correct constructions categorically
+title: Composing correct constructions
 author: Conal Elliott
 ---
 
-# Composing correct constructions categorically
+# Composing correct constructions
 
-This chapter is one step in a journey to construct machine-verified hardware design in a simple, principled manner.
+This note takes a few small step in a journey to construct machine-verified hardware design in a simple, principled manner.
 
 We'll start with addition on statically bounded natural numbers, as provided by the [`Data.Fin`](https://agda.github.io/agda-stdlib/Data.Fin.html) module in [the Agda standard library](https://github.com/agda/agda-stdlib).
 (Most of the functionality is re-exported from [`Data.Fin.Base`](https://agda.github.io/agda-stdlib/Data.Fin.Base.html).)
-The defining module calls these types `Fin n` (for `n : ℕ`), but we'll rename them to `𝔽 n` for the code below.
+The defining module calls these types "`Fin n`" (for `n : ℕ`), but we'll rename them to "`𝔽 n`" for the code below.
 
 ## Some preliminaries
 
@@ -33,7 +33,7 @@ open import Functions
 open import Categorical.Arrow Function
 ```
 
-`Data.Fin` and `Data.Fin.Properties` provide a way to increase a number's bound, while assuring us that its value remains the same:
+`Data.Fin` provides a way to increase a number's bound, while `Data.Fin.Properties` assures us that its value remains undisturbed:
 
 ```agdaQ
 inject+ : ∀ {m} n → 𝔽 m → 𝔽 (m ℕ.+ n)
@@ -81,8 +81,8 @@ toℕ-⊹ {suc _} (suc i) j rewrite toℕ-⊹ i j = refl
 ```
 
 Let's consider the *meaning* of an `𝔽` value to be the corresponding `ℕ`, as given by `toℕ`.
-Then `toℕ-⊹` says that *the meaning of a sum of `𝔽` values is the sum of the meanings of those values*.
-The property has a sort of rhyme to it that may sound familiar if you've seen abstract algebra and its various examples of *homomorphisms*.
+Then `toℕ-⊹` says that *the meaning of the sum* of `𝔽` values is *the sum of the meanings* of those values.
+The property has a sort of rhyme to it that may sound familiar if you've seen abstract algebra and its various flavors of *homomorphisms*.
 
 ## Packaging it all up to go
 
@@ -197,10 +197,9 @@ We got around that problem neatly by introducing a carry-in bit, which happens t
 When we're adding not just two but three `m`-bounded numbers, the sum is at most `3 * m - 3`.
 When adding `k` such numbers, the sum is at most `k * m - k`.
 Oh dear---subtraction again :scream_cat:.
-
 Can we extend the carry-in trick to find our way back to type simplicity?
 Yes, by allowing the carry-in to be at most `k - 1`, i.e., to have type `Fin k`.
-Then the sum is at most `(k * m - k) + (k - 1) ≡ k * m - 1`, i.e., has type `Fin (k * m)`:
+Then the sum is at most `(k * m - k) + (k - 1) ≡ k * m - 1` and so has type `Fin (k * m)`:
 
 ```agdaQ
 add𝔽s : ∀ {k m} → 𝔽 k × Vec (𝔽 m) k → 𝔽 (k * m)
@@ -214,7 +213,7 @@ An even weirder special case is no summands at all, for which the carry-bit type
 This case "works", too, since `(𝔽 0 × Vec (𝔽 m) 0 → 𝔽 (0 * m)) ≅ ⊥ → ⊥`, which has just one inhabitant.
 :::
 
-As we move rightward through the vector (which, confusingly, corresponds to moving *lefward* in our familiar positional numeric notations), the "carry-in" value grows by absorbing successive summands as .
+As we move rightward through the vector (which, confusingly, corresponds to moving *leftward* in our familiar positional numeric notations), the "carry-in" value grows by absorbing successive summands.
 For this reason, while initially of type `𝔽 k`, we will have to leave room to grow (even as `k` shrinks).
 As a first guess, let's try the following type, adding a new parameter `i` to help bound the accumulator.
 
@@ -224,7 +223,7 @@ add𝔽s₀ : ∀ {k i m} → 𝔽 (k + i) × Vec (𝔽 m) k → 𝔽 (k * m + i
 
 This signature gives us the flexibility needed to accommodate summand accumulation and will specialize to `add𝔽s` above when `i ≡ 0` (with help from `+-identityʳ`).
 
-Things are about to get wild, but I promise you that they'll calm down soon.
+Things are about to get wild :grimacing:, but I promise you that they'll calm down soon.
 Feel free to read the next few definitions carefully or breeze through them, as pleases you.
 (Agda's type-checker already pointed out my many mistakes and eventually approved the revision below.)
 
@@ -278,13 +277,6 @@ add𝔽s⇉₀ = mk add𝔽s₀ addℕs₀ toℕ-add𝔽s₀
 ```
 
 Phew!
-With considerable effort, we made it.
-
-Math and code, however, are not things we put behind us once written.
-In addition to the purchase cost, we now have an ongoing paid subscription to complexity :grimacing:.
-We must reason through this mess over and over---both individually and collectively---as we build from here.
-
-Or cancel our subscription, learn from experience, and try something else.
 
 ## Seeking simplicity
 
@@ -316,7 +308,7 @@ addℕs₂ (suc k) = addℕs₂ k ∘ first (uncurry _+_) ∘ assocˡ
 We could have used `exl` (left projection) for the `zero` case, but `unitorᵉʳ` (right unit elimination) emphasizes that we are discarding only the value `tt : ⊤`, which contains no information.
 
 ::: aside
-Unitors are available in monoidal categories, which do not provide for duplicating or destroying information.
+Unitors are available in monoidal categories, which do not provide for duplicating or discarding information.
 Non-cartesian, monoidal categories include reversible computations, which suggest a remedy for the [unavoidably heat-generating](https://en.wikipedia.org/wiki/Landauer%27s_principle) (diabatic) nature of the current dominant paradigm of irreversible computing.
 :::
 
@@ -352,7 +344,7 @@ As we march forward, `j` counts how many vector elements we've met and gratefull
 As `j` ascends from `zero`, `k` descends to `zero`, always in perfect balance ☯.
 Ultimately, we offer a well-digested summary of our encounters.
 
-Much simpler!
+These new definitions are much simpler!
 I think we're getting somewhere.
 
 The `id≡` function  used here (a definition---not field---in the `Category` class) provides an alternative to `subst` and `rewrite`:
@@ -362,7 +354,6 @@ The `id≡` function  used here (a definition---not field---in the `Category` cl
   id≡ refl = id
 ```
 
-::: aside
 We can eliminate `id≡ eq` here with the help of a somewhat hairy `subst` or via `rewrite`.
 After a few attempts, I came up with the following:
 
@@ -370,22 +361,21 @@ After a few attempts, I came up with the following:
 add𝔽s₂ : ∀ {j k m} → 𝔽 (k + j * m) × V (𝔽 m) k → 𝔽 ((k + j) * m)
 add𝔽s₂ {j}{zero }{m} = unitorᵉʳ
 add𝔽s₂ {j}{suc k}{m} rewrite sym (cong (_* m) (+-suc k j)) =
-  add𝔽s₂ {suc j}{k}{m} ∘ add𝔽ᶜ-suc {j}
+  add𝔽s₂ {suc j}{k} ∘ add𝔽ᶜ-suc {j}
 ```
 
-Without the `cong`, type-checking failed.
+Without the `cong`, type-checking fails.
 Maybe it needed just a bit more context to avoid some harmful uses.
-:::
 
 ::: aside
 It feels right to me that this `add𝔽s₁` definition looks like a *dependently typed left fold*, since its purpose is to implement the simply typed left fold in the definition of `addℕs`, while refining (the simply typed) `ℕ` into (the dependently typed) `𝔽`.
 
 The `foldl` we used above from `Data.Vec.Base` already does have a dependent type:
 ```agdaQ
-foldl : ∀ {a b} {A : Set a} (B : ℕ → Set b) {m} →
-        (∀ {n} → B n → A → B (suc n)) →
-        B zero →
-        Vec A m → B m
+foldl : ∀ {a b} {A : Set a} (B : ℕ → Set b) {m}
+      → (∀ {n} → B n → A → B (suc n))
+      → B zero
+      → Vec A m → B m
 foldl b _⊕_ n []       = n
 foldl b _⊕_ n (x ∷ xs) = foldl (λ n → b (suc n)) _⊕_ (n ⊕ x) xs
 ```
@@ -393,6 +383,25 @@ foldl b _⊕_ n (x ∷ xs) = foldl (λ n → b (suc n)) _⊕_ (n ⊕ x) xs
 This pattern doesn't seem quite general enough, since we're simultaneously decreasing `k` and increasing `j`.
 On the other hand, maybe `add𝔽s₁` could be rephrased to fit comfortably.
 :::
+
+The recipes for `add𝔽ᶜ-suc` and `add𝔽s₂` are written in a form that contains only categorical operations and basic addition.
+Since we have arrow (`⇉`) versions of all of these building blocks, we can use these same recipes to build arrow versions of `add𝔽ᶜ-suc` and `add𝔽s₁`, thus establishing the meaning of `add𝔽s₂` as `addℕs`:
+
+```agda
+add𝔽ᶜ-suc⇉ : ∀ {j k m : ℕ}
+           →   toℕ {suc k + j * m} ⊗ mapⱽ (suc k) (toℕ {m})
+             ⇉ toℕ {k + suc j * m} ⊗ mapⱽ k (toℕ {m})
+add𝔽ᶜ-suc⇉ {j}{k}{m} rewrite sym (+-comm (j * m) m)
+                           | sym (+-assoc k (j * m) m) =
+  first ⊹⇉ ∘ assocˡ
+
+add𝔽s⇉ : ∀ {j k m}
+        →   toℕ {k + j * m} ⊗ mapⱽ k (toℕ {m})
+          ⇉ toℕ {(k + j) * m}
+add𝔽s⇉ {j} {zero } {m} = unitorᵉʳ
+add𝔽s⇉ {j} {suc k} {m} rewrite sym (cong (_* m) (+-suc k j)) =
+  add𝔽s⇉ {suc j}{k} ∘ add𝔽ᶜ-suc⇉ {j}
+```
 
 ## Still to come
 
