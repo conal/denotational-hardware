@@ -394,12 +394,26 @@ add𝔽ᶜ-suc⇉ : ∀ {j k m}
 add𝔽ᶜ-suc⇉ {j}{k}{m} rewrite sym (+-comm (j * m) m) | sym (+-assoc k (j * m) m) =
   first ⊹⇉ ∘ assocˡ
 
-add𝔽s⇉ : ∀ {j k m}
-        →   toℕ {k + j * m} ⊗ mapⱽ k (toℕ {m})
-          ⇉ toℕ {(k + j) * m}
-add𝔽s⇉ {j} {zero } {m} = unitorᵉʳ
-add𝔽s⇉ {j} {suc k} {m} rewrite sym (cong (_* m) (+-suc k j)) =
-  add𝔽s⇉ {suc j}{k} ∘ add𝔽ᶜ-suc⇉ {j}
+add𝔽s⇉′ : ∀ {j k m} → toℕ {k + j * m} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {(k + j) * m}
+add𝔽s⇉′ {j} {zero } {m} = unitorᵉʳ
+add𝔽s⇉′ {j} {suc k} {m} rewrite sym (cong (_* m) (+-suc k j)) =
+  add𝔽s⇉′ {suc j}{k} ∘ add𝔽ᶜ-suc⇉ {j}
+```
+
+Then specialize with `j ≡ zero`:
+```agda
+add𝔽s⇉ : ∀ {k m} → toℕ {k} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {k * m}
+add𝔽s⇉ {k}{m} = subst (λ z → toℕ {z} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {z * m})
+                      (+-identityʳ k)
+                (add𝔽s⇉′ {0}{k}{m})
+```
+
+I hoped to for a simpler-looking version using `rewrite` instead of `subst`.
+The following attempt doesn't satisfy the type-checker:
+
+```agdaQ
+add𝔽s⇉ : ∀ {k m} → toℕ {k} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {k * m}
+add𝔽s⇉ {k}{m} rewrite +-identityʳ k = add𝔽s⇉′ {0}{k}{m}
 ```
 
 ## Still to come
