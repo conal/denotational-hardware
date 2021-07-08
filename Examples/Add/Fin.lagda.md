@@ -19,14 +19,15 @@ First declare our module and import needed functionality from other modules:
 module Examples.Add.Fin where
 
 open import Data.Unit
-open import Data.Product using (_,_; uncurry)
-open import Data.Fin as 𝔽 hiding (_+_) renaming (Fin to 𝔽)
+open import Data.Sum using (inj₁; inj₂)
+open import Data.Product using (_,_; uncurry) renaming (_×_ to _×′_)
+open import Data.Fin as 𝔽 hiding (_+_; quotRem) renaming (Fin to 𝔽)
 open import Data.Fin.Properties
 open import Data.Nat as ℕ
 open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
-open import Data.Vec
+open import Data.Vec hiding (splitAt)
 
 open import Categorical.Raw hiding (uncurry)
 open import Functions
@@ -36,7 +37,7 @@ open import Categorical.Arrow Function
 `Data.Fin` provides a way to increase a number's bound, while `Data.Fin.Properties` assures us that its value remains undisturbed:
 
 ```agdaQ
-inject+ : ∀ {m} n → 𝔽 m → 𝔽 (m ℕ.+ n)
+inject+ : ∀ {m} n → 𝔽 m → 𝔽 (m + n)
 
 toℕ-inject+ : ∀ {m} n (i : 𝔽 m) → toℕ i ≡ toℕ (inject+ n i)
 ```
@@ -44,7 +45,7 @@ toℕ-inject+ : ∀ {m} n (i : 𝔽 m) → toℕ i ≡ toℕ (inject+ n i)
 It will be convenient to tweak the signature of `inject+` and to reverse the direction of `toℕ-inject+`.
 
 ```agda
-inject+′ : ∀ {m} n → 𝔽 m → 𝔽 (n ℕ.+ m)
+inject+′ : ∀ {m} n → 𝔽 m → 𝔽 (n + m)
 inject+′ {m} n j = subst 𝔽 (+-comm m n) (inject+ n j)
 
 toℕ-subst : ∀ {m n} {eq : m ≡ n} {i : 𝔽 m} → toℕ (subst 𝔽 eq i) ≡ toℕ i
@@ -126,7 +127,7 @@ By pausing at each step and giving focused attention to our surroundings, we fos
 
 When we add two digits (whether in base ten or base two), the result can be too large to denote with a single digit.
 For this reason, digit addition produces not only a digit but an overflow---or "carry-out"---value as well.
-No matter what the base, the carry-out is either zero or one, which is to say it is a `𝔽 2`, or a "bit", not a digit.
+No matter what the base, the carry-out is either zero or one, which is to say it is an `𝔽 2`, or a "bit", not a digit.
 (Digits and bits coincide only in base two.)
 
 When we move *leftward* from digit to digit (since we write the least significant digit on the right and most significant on the left), we "carry out" the carry-out bit into the next digit addition, where it becomes the "carry-in" bit of the next (more significant) digit addition.
@@ -139,7 +140,7 @@ add𝔽₀ (cᵢ , a , b) = cᵢ ⊹ a ⊹ b
 ```
 
 Note how `add𝔽₀` replaces the `𝔽 (suc m)` argument to `_⊹_` by `𝔽 2` *and* `𝔽 m`.
-These two arguments are added to yield `𝔽 (suc m)` (since `2 ≡ suc (suc zero)`), which is then added to a `𝔽 n` to get a `F (m + n)`.
+These two arguments are added to yield `𝔽 (suc m)` (since `2 ≡ suc (suc zero)`), which is then added to an `𝔽 n` to get an `F (m + n)`.
 
 We'll want to know that `add𝔽₀` correctly implements something and what that something is, so let's repeat our packaging game.
 A natural meaning is adding three unfettered natural numbers (not troubling them or ourselves with bounds), which we can prove correct and package up:
@@ -151,7 +152,7 @@ addℕ (c , a , b) = c + a + b
 toℕ-add𝔽₀ : ∀ {m n} → toℕ ∘ add𝔽₀ {m}{n} ≗ addℕ ∘ (toℕ ⊗ toℕ ⊗ toℕ)
 toℕ-add𝔽₀ (cᵢ , a , b) rewrite toℕ-⊹ (cᵢ ⊹ a) b | toℕ-⊹ cᵢ a = refl
 
-add𝔽⇉₀ : ∀ {m n} → toℕ ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ
+add𝔽⇉₀ : ∀ {m n} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {n} ⇉ toℕ {m + n}
 add𝔽⇉₀ = mk add𝔽₀ addℕ toℕ-add𝔽₀
 ```
 
@@ -367,6 +368,18 @@ add𝔽s₂ {j}{suc k}{m} rewrite sym (cong (_* m) (+-suc k j)) =
 Without the `cong`, type-checking fails.
 Maybe it needed just a bit more context to avoid some harmful uses.
 
+```agda
+add𝔽s : ∀ {k m} → 𝔽 k × V (𝔽 m) k → 𝔽 (k * m)
+add𝔽s {k}{m} = subst (λ z → 𝔽 z × V (𝔽 m) k → 𝔽 (z * m)) (+-identityʳ k)
+                 (add𝔽s₂ {0}{k}{m})
+```
+
+I hoped for a simpler-looking version using `rewrite` instead of `subst`.
+The following attempt doesn't type-check:
+```agdaQ
+add𝔽s {k}{m} rewrite +-identityʳ k = add𝔽s₂ {0}{k}{m}
+```
+
 ::: aside
 It feels right to me that this `add𝔽s₁` definition looks like a *dependently typed left fold*, since its purpose is to implement the simply typed left fold in the definition of `addℕs`, while refining (the simply typed) `ℕ` into (the dependently typed) `𝔽`.
 
@@ -408,12 +421,47 @@ add𝔽s⇉ {k}{m} = subst (λ z → toℕ {z} ⊗ mapⱽ k (toℕ {m}) ⇉ to�
                   (add𝔽s⇉′ {0})
 ```
 
-I hoped for a simpler-looking version using `rewrite` instead of `subst`.
-The following attempt doesn't type-check:
-```agdaQ
-add𝔽s⇉ : ∀ {k m} → toℕ {k} ⊗ mapⱽ k (toℕ {m}) ⇉ toℕ {k * m}
-add𝔽s⇉ {k}{m} rewrite +-identityʳ k = add𝔽s⇉′ {0}{k}{m}
+As intended, `add𝔽s⇉` contains `addℕs` and `add𝔽s` (which can now be discarded), and the proof of their relationship.
+The representation of `add𝔽s⇉` comprises exactly these three aspects (as record fields), and its signature contains the data mappings.
+The implementation and specification extractors [are cartesian functors](https://en.wikipedia.org/wiki/Comma_category#Properties), mirroring the repeated use of a single categorical recipe.
+
+<!--
+:::banner
+working here
+:::
+
+## Carrying out
+
+Addition in positional number systems need to carry *out* as well as *in*.
+Our `add𝔽s` function above, which is also reconstructed in `add𝔽s⇉`, 
+
+Adapted from `quotRem` in `Data.Fin` with some convenient alterations:
+```agda
+remQuot : ∀ {k m} → 𝔽 (k * m) → 𝔽 m × 𝔽 k
+remQuot {suc _}{m} i with splitAt m i
+... | inj₁ a = a , zero
+... | inj₂ b = second suc (remQuot b)
 ```
+
+where
+```agdaQ
+splitAt : ∀ m {n} → Fin (m + n) → Fin m ⊎ Fin n
+```
+
+As the name `remQuot` suggests, it takes `i : 𝔽 (k * m)` and yields the remainder `i % m : Fin m` and the quotient `i / m : k`.
+
+In fact, `splitAt` and `remQuot` are halves of two isomorphisms.
+The inverse for `remQuot` for a divisor `m` takes a remainder `i%m` and quotient `i/m` and yields the dividend `i%m + k * i/m`.
+Remember, however, that `i%m` and `i/m` are `𝔽`s, `k` is an `ℕ`, and the combination is an `𝔽`.
+Defining this combination is almost as tricky as what we just did with `add𝔽s`.
+Fortunately, it is a special case of `add𝔽s`, in which the `k` addends are all identical.
+We can thus give a very simple inverse definition (having already done the hard work):
+```agda
+remQuot⁻¹ : ∀ {k m} → 𝔽 k × 𝔽 m → 𝔽 (k * m)
+remQuot⁻¹ {k} (i%m , i/m) = add𝔽s (i%m , replicateⱽ k i/m)
+```
+
+-->
 
 ## Still to come
 
