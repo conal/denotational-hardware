@@ -104,6 +104,10 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
   unzipⱽ  zero   = ! ▵ !
   unzipⱽ (suc n) = transpose ∘ second (unzipⱽ n)
 
+  replicateⱽ : ∀ n → a ⇨ V a n
+  replicateⱽ zero    = !
+  replicateⱽ (suc n) = id ▵ replicateⱽ n
+
   -- (a × b) × (V a n × V b n) ⇨ (a × V a n) × (b × V b n)
 
   mapᵀ : ∀ n → (a ⇨ b) → (T a n ⇨ T b n)
@@ -113,6 +117,10 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
   unzipᵀ : ∀ n → (T (a × b) n ⇨ T a n × T b n)
   unzipᵀ  zero   = id
   unzipᵀ (suc n) = transpose ∘ (unzipᵀ n ⊗ unzipᵀ n)
+
+  replicateᵀ : ∀ n → a ⇨ T a n
+  replicateᵀ zero    = id
+  replicateᵀ (suc n) = replicateᵀ n ▵ replicateᵀ n
 
 open Cartesian ⦃ … ⦄ public
 
