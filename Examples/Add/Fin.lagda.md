@@ -29,6 +29,7 @@ open import Data.Nat.Properties
 open import Relation.Binary.PropositionalEquality
 open ≡-Reasoning
 open import Data.Vec hiding (splitAt)
+open import Function using (_∘′_)  -- TEMP
 
 open import Categorical.Raw hiding (uncurry)
 open import Functions
@@ -191,6 +192,46 @@ add𝔽≡₀⇉ {m} rewrite (+-identityʳ m) = add𝔽⇉
 If we think of our `m`-bounded numbers as *digits* in base/radix `m`, then the result is in base `2 * m`, which seem awkward.
 On the other hand, for any `n` and `m`, `𝔽 (n * m)` is isomorphic to `𝔽 n × 𝔽 m` and hence to `𝔽 m × 𝔽 n`.
 In particular, we can repackage `𝔽 (2 * m)` as `𝔽 m × 𝔽 2`, splitting our result into a base-`m` digit and a carry-out bit.
+
+If we have a correct adder with carry-in and carry-out, we can convert it into an adder having the same type as `add𝔽≡₀⇉`.
+Make clarify this claim, let's give a name to correct carry-in-out adders:
+
+```agda
+toℕ⊹☆ : ∀ {k m} → 𝔽 m × 𝔽 k → ℕ
+toℕ⊹☆ {k}{m} (i , j) = toℕ i + m * toℕ j
+
+Addᶜ : ℕ → Set
+Addᶜ m = toℕ {2} ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ⊹☆ {2}{m}
+```
+
+I'll refer to these correct carry-in/carry-out adders as "digit adders" for base `m`.
+
+Now let's suppose that we have digit adders for base `m` and base `n`.
+How can we combine them into a digit adder for base `m * n`?
+
+    infixr 4 _•ᶜ_
+    _•ᶜ_ : ∀ {m n} → Addᶜ m → Addᶜ n → Addᶜ (m * n)
+    +m •ᶜ +n = {!!}
+
+
+I don't think this formulation is quite right.
+Our adders won't operate on `𝔽 m` for some `m`, but rather on some other representation of `𝔽 m`.
+The composite adder will operate on pairs of representations.
+
+```agda
+Addᶜ′ : ∀ {r : Set}{m} (f : r → 𝔽 m) → Set
+Addᶜ′{r}{m} f = toℕ {2} ⊗ toℕ′ ⊗ toℕ′ ⇉ toℕ′ ⊗ toℕ {2} where toℕ′ = toℕ ∘ f
+```
+
+:::aside
+Now show define pairings of `Addᶜ′`s and an `Addᶜ′` for `⊤`.
+Could `Addᶜ′` be the objects of a cartesian or at least monoidal category?
+What are the morphisms?
+:::
+
+Since the result must be a *correct* adder of ...
+
+* * * * * * * * * * * * * * * * * * * *
 
 Fortunately, `Data.Fin.Base` ([as of agda-stdlib version 1.6](https://github.com/agda/agda-stdlib/blob/master/CHANGELOG/v1.6.md)) defines two conversion functions:
 
