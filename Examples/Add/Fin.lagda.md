@@ -18,7 +18,7 @@ First declare our module and import needed functionality from other modules:
 ```agda
 module Examples.Add.Fin where
 
-open import Data.Unit
+open import Data.Unit using (tt) renaming (⊤ to ⊤′)  -- for type hints
 open import Data.Sum using (inj₁; inj₂)
 open import Data.Product using (_,_; uncurry)
   renaming (_×_ to _×′_) -- makes type hints easier to read
@@ -189,39 +189,78 @@ add𝔽≡₀⇉ : ∀ {m} → toℕ {2} ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ {
 add𝔽≡₀⇉ {m} rewrite (+-identityʳ m) = add𝔽⇉
 ```
 
-If we think of our `m`-bounded numbers as *digits* in base/radix `m`, then the result is in base `2 * m`, which seem awkward.
-On the other hand, for any `n` and `m`, `𝔽 (n * m)` is isomorphic to `𝔽 n × 𝔽 m` and hence to `𝔽 m × 𝔽 n`.
+If we think of our `m`-bounded numbers as *digits* in base/radix `m`, then the result is in base `2 * m`.a
+For any `n` and `m`, however, `𝔽 (n * m)` is isomorphic to `𝔽 n × 𝔽 m` and hence to `𝔽 m × 𝔽 n`.
 In particular, we can repackage `𝔽 (2 * m)` as `𝔽 m × 𝔽 2`, splitting our result into a base-`m` digit and a carry-out bit.
 
 If we have a correct adder with carry-in and carry-out, we can convert it into an adder having the same type as `add𝔽≡₀⇉`.
-Make clarify this claim, let's give a name to correct carry-in-out adders:
+To clarify this claim, let's give a name to correct carry-in-out adders:
 
 ```agda
 toℕ⊹☆ : ∀ {k m} → 𝔽 m × 𝔽 k → ℕ
 toℕ⊹☆ {k}{m} (i , j) = toℕ i + m * toℕ j
 
-Addᶜ : ℕ → Set
-Addᶜ m = toℕ {2} ⊗ toℕ {m} ⊗ toℕ {m} ⇉ toℕ⊹☆ {2}{m}
+Addᶜ : ∀ {m}{r : Set} (f : r → 𝔽 m) → Set
+Addᶜ f = toℕ {2} ⊗ twice (toℕ ∘ f) ⇉ toℕ⊹☆ {2} ∘ first f
+
+-- Maybe make f implicit
+
+
+comb : ∀ {m k} → 𝔽 m × 𝔽 k → 𝔽 (m * k)
+comb = uncurry combine
+
+infixr 2 _ː_
+_ː_ : ∀ {m n}{r s} (f : r → 𝔽 m) (g : s → 𝔽 n) → (r × s → 𝔽 (m * n))
+f ː g = comb ∘ (f ⊗ g)
+
+⊤ᶜ : Addᶜ {1}{⊤} (λ { tt → zero })
+⊤ᶜ = mk (λ (cᵢ , tt , tt) → tt , cᵢ) -- or as unitors
+        addℕ
+        (λ (cᵢ , tt , tt) →
+           begin
+             toℕ cᵢ + 0
+           ≡⟨ cong (_+ 0) (sym (+-identityʳ (toℕ cᵢ))) ⟩
+             toℕ cᵢ + 0 + 0
+           ∎)
+
+infixr 4 _,̂_
+
+_,̂_ : ∀ {r s} → (𝔽 2 × r × r → r × 𝔽 2)
+              → (𝔽 2 × s × s → s × 𝔽 2)
+              → (𝔽 2 × (r × s) × (r × s) → (r × s) × 𝔽 2) -- TODO: abbreviate
+(+̂ᵣ ,̂ +̂ₛ) (cᵢ , (x₁ , x₂) , (y₁ , y₂)) =
+  let z₁ , cₘ = +̂ᵣ (cᵢ , x₁ , y₁)
+      z₂ , cₒ = +̂ₛ (cₘ , x₂ , y₂)
+    in (z₁ , z₂) , cₒ
+
+record Adder : Set₁ where
+  constructor mk
+  field
+    {m} : ℕ
+    {r} : Set
+    {f} : r → 𝔽 m
+    +̂ : 𝔽 2 × r × r → r × 𝔽 2
+    commute : (toℕ⊹☆ ∘ first f) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ f)) 
+
+Adder⇉ : (h : Adder) → let open Adder h using (f) in
+                       toℕ {2} ⊗ twice (toℕ ∘ f) ⇉ toℕ⊹☆ {2} ∘ first f
+Adder⇉ (mk +̂ commute) = mk +̂ addℕ commute
+
+infixr 2 _×ᶜ_
+_×ᶜ_ : ∀ {m n}{r s} → {μ : r → 𝔽 m} → {ν : s → 𝔽 n}
+     → Addᶜ μ → Addᶜ ν → Addᶜ (μ ː ν)
+                         -- Addᶜ (comb ∘ (μ ⊗ ν))
+mk +̂ᵣ +ᵣ +̃ᵣ ×ᶜ mk +̂ₛ +ₛ +̃ₛ = mk (+̂ᵣ ,̂ +̂ₛ) addℕ {!!}
+
+-- mk f f̂ f̃ ×ᶜ mk g ĝ g̃ =
+--   mk (add× f g) addℕ {!!}
+
 ```
 
 I'll refer to these correct carry-in/carry-out adders as "digit adders" for base `m`.
 
 Now let's suppose that we have digit adders for base `m` and base `n`.
 How can we combine them into a digit adder for base `m * n`?
-
-    infixr 4 _•ᶜ_
-    _•ᶜ_ : ∀ {m n} → Addᶜ m → Addᶜ n → Addᶜ (m * n)
-    +m •ᶜ +n = {!!}
-
-
-I don't think this formulation is quite right.
-Our adders won't operate on `𝔽 m` for some `m`, but rather on some other representation of `𝔽 m`.
-The composite adder will operate on pairs of representations.
-
-```agda
-Addᶜ′ : ∀ {r : Set}{m} (f : r → 𝔽 m) → Set
-Addᶜ′{r}{m} f = toℕ {2} ⊗ toℕ′ ⊗ toℕ′ ⇉ toℕ′ ⊗ toℕ {2} where toℕ′ = toℕ ∘ f
-```
 
 :::aside
 Now show define pairings of `Addᶜ′`s and an `Addᶜ′` for `⊤`.
