@@ -20,7 +20,7 @@ module Examples.Add.Fin where
 
 open import Data.Unit using (tt) renaming (⊤ to ⊤′)  -- for type hints
 open import Data.Sum using (inj₁; inj₂)
-open import Data.Product using (_,_; uncurry)
+open import Data.Product using (Σ; Σ-syntax; _,_; uncurry)
   renaming (_×_ to _×′_) -- makes type hints easier to read
 open import Data.Fin as 𝔽 hiding (_+_; quotRem) renaming (Fin to 𝔽)
 open import Data.Fin.Properties
@@ -198,39 +198,102 @@ To clarify this claim, let's give a name to correct carry-in-out adders:
 
 ```agda
 
--- toℕ (combine i j) ≡ ?
+-- inject+ : ∀ {m} n → Fin m → Fin (m ℕ.+ n)
 
-toℕ⊹☆ : ∀ {k m} → 𝔽 m × 𝔽 k → ℕ
-toℕ⊹☆ {k}{m} (i , cₒ) = toℕ i + m * toℕ cₒ
+-- inject+′ : ∀ {m} n → 𝔽 m → 𝔽 (n + m)
+
+-- combine : ∀ {k m} → 𝔽 k → 𝔽 m → 𝔽 (k * m)
+-- combine {suc k} {m} zero j = inject+ (k * m) j
+-- combine {suc k} {m} (suc i) j = raise m (combine i j)
+
+-- toℕ-raise : ∀ {m} n (i : Fin m) → toℕ (raise n i) ≡ n + toℕ i
+
+toℕ-combine : ∀ {k m} (j : 𝔽 k) (i : 𝔽 m)
+            → toℕ (combine {k}{m} j i) ≡ toℕ j * m + toℕ i
+toℕ-combine {suc k} {m}  zero   i = sym (toℕ-inject+ (k * m) i)
+toℕ-combine {suc k} {m} (suc j) i =
+    begin
+      toℕ (combine {suc k}{m} (suc j) i)
+    ≡⟨⟩
+      toℕ (raise m (combine j i))
+    ≡⟨ toℕ-raise m (combine j i) ⟩
+      m + toℕ (combine j i)
+    ≡⟨ cong (m +_) (toℕ-combine j i) ⟩
+      m + (toℕ j * m + toℕ i)
+    ≡⟨ sym (+-assoc m (toℕ j * m) (toℕ i)) ⟩
+      m + toℕ j * m + toℕ i
+    ≡⟨⟩
+      toℕ (suc j) * m + toℕ i
+    ∎
+
+```
+
+```agda
+
+toℕ× : ∀ {m k} → 𝔽 m × 𝔽 k → ℕ
+toℕ× {m}{k} (i , j) = toℕ i + toℕ j * m
 
 -- remQuot k "i" = "i / k" , "i % k"
 
+-- Carry-out on right (and carry-in on left)
 comb : ∀ {m k} → 𝔽 m × 𝔽 k → 𝔽 (m * k)
-comb = uncurry combine
+comb {m}{k} (i , j) = subst 𝔽 (*-comm k m) (combine j i)
 
--- inverse of remQuot
--- combine : ∀ {n k} → Fin n → Fin k → Fin (n * k)
+toℕ-comb : ∀ {m k} → toℕ ∘ comb ≗ toℕ× {m}{k}
+toℕ-comb {m}{k} (i , j) =
+    begin
+      toℕ (comb {m}{k} (i , j))
+    ≡⟨⟩
+      toℕ (subst 𝔽 (*-comm k m) (combine j i))
+    ≡⟨ toℕ-subst ⟩
+      toℕ (combine j i)
+    ≡⟨ toℕ-combine j i ⟩
+      toℕ j * m + toℕ i
+    ≡⟨ +-comm (toℕ j * m) (toℕ i) ⟩
+      toℕ× (i , j)
+    ∎
+```
 
-toℕ-combine : ∀ {m k} (i : 𝔽 m) (j : 𝔽 k) → toℕ (combine i j) ≡ toℕ⊹☆ (i , j)
-toℕ-combine {m}{k} i j = {!!}
+```agda
 
-toℕ∘comb : ∀ {m k} → toℕ ∘ comb ≡ toℕ⊹☆{k}{m}
-toℕ∘comb {m}{k} = {!!}
+Addᶜ⇉ : ∀ {m}{r : Set} {μ : r → 𝔽 m} → Set
+-- Addᶜ⇉ {m}{r}{μ} = toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ× {m}{2} ∘ first μ
+Addᶜ⇉ {m} {μ = μ} = toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ {m * 2} ∘ comb ∘ first μ
 
---     let zᵣ , cₘ = +̂ᵣ (cᵢ , xᵣ , yᵣ)
---         zₛ , cₒ = +̂ₛ (cₘ , xₛ , yₛ) in
+Adder : ∀ {m}{r : Set} {μ : r → 𝔽 m} → Set
+Adder {m}{r}{μ} = Σ[(mk _ f₂ _) ∈ Addᶜ⇉ {m}{r}{μ}] (f₂ ≡ addℕ)
 
--- -- (+̂ᵣ ,̂ +̂ₛ) (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ)) =
--- --   let zᵣ , cₘ = +̂ᵣ (cᵢ , xᵣ , yᵣ)
--- --       zₛ , cₒ = +̂ₛ (cₘ , xₛ , yₛ)
--- --     in (zᵣ , zₛ) , cₒ
+-- Adder {m}{r}{μ} = Σ (Addᶜ⇉ {m}{r}{μ}) λ (mk _ f₂ _) → f₂ ≡ addℕ
+       
+adder : {m : ℕ} {r : Set} {μ : r → 𝔽 m}
+        (+̂ : 𝔽 2 × r × r → r × 𝔽 2)
+        -- (commute : (toℕ× ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) )
+        (commute : (toℕ ∘ comb ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) )
+      → Adder {m}{r}{μ}
+adder +̂ commute = mk +̂ addℕ commute , refl
 
---        toℕ⊹☆ (combine (μᵣ zᵣ) (μₛ zₛ) , cₒ)
---      ≡⟨ {!!} ⟩
---        toℕ cᵢ + toℕ (combine (μᵣ xᵣ) (μₛ xₛ)) + toℕ (combine (μᵣ yᵣ) (μₛ yₛ))
+⊤ᶜ : Adder {1}{⊤}{λ { tt → zero }}
 
+⊤ᶜ = adder {1}{⊤}{λ { tt → zero }}
+           (λ (cᵢ , tt , tt) → tt , cᵢ)
+           λ (cᵢ , tt , tt) →
+       begin
+         toℕ (comb (zero {zero} , cᵢ))
+       ≡⟨ toℕ-comb (zero {zero} , cᵢ) ⟩
+         toℕ× (zero {zero} , cᵢ)
+       ≡⟨⟩
+         toℕ cᵢ * 1
+       ≡⟨ *-identityʳ (toℕ cᵢ) ⟩
+         toℕ cᵢ
+       ≡⟨ sym (+-identityʳ (toℕ cᵢ)) ⟩
+         toℕ cᵢ + 0
+       ≡⟨ sym (+-assoc (toℕ cᵢ) 0 0) ⟩
+         toℕ cᵢ + 0 + 0
+       ∎
 
+```
 
+```agdaQ
 
 -- The parts of an adder ⇉
 record Adder : Set₁ where
@@ -240,15 +303,16 @@ record Adder : Set₁ where
     {r} : Set
     {μ} : r → 𝔽 m
     +̂ : 𝔽 2 × r × r → r × 𝔽 2
-    commute : (toℕ⊹☆ ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
-    -- commute : (toℕ ∘ comb ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
+    -- commute : (toℕ× ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
+    commute : (toℕ ∘ comb ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
 
 -- TODO: phase out if used only in Adder⇉
 Addᶜ⇉ : ∀ {m}{r : Set} {μ : r → 𝔽 m} → Set
-Addᶜ⇉ {μ = μ} = toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ⊹☆ {2} ∘ first μ
+-- Addᶜ⇉ {μ = μ} = toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ× {2} ∘ first μ
+Addᶜ⇉ {m} {μ = μ} = toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ {m * 2} ∘ comb ∘ first μ
 
 -- Adder⇉ : (h : Adder) → let open Adder h using (μ) in
---                        toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ⊹☆ {2} ∘ first μ
+--                        toℕ {2} ⊗ twice (toℕ ∘ μ) ⇉ toℕ× {2} ∘ first μ
 
 -- Adder⇉ : Adder → Addᶜ⇉  -- doesn't check
 
@@ -259,12 +323,18 @@ Adder⇉ (mk +̂ commute) = mk +̂ addℕ commute
 ⊤ᶜ : Adder
 ⊤ᶜ = mk {1}{⊤}{λ { tt → zero }}
         (λ (cᵢ , tt , tt) → tt , cᵢ)
-        (λ (cᵢ , tt , tt) →
-           begin
-             toℕ cᵢ + 0
-           ≡⟨ cong (_+ 0) (sym (+-identityʳ (toℕ cᵢ))) ⟩
-             toℕ cᵢ + 0 + 0
-           ∎)
+        λ (cᵢ , tt , tt) →
+          begin
+            toℕ (comb {1} (zero , cᵢ))
+          ≡⟨ toℕ-comb {1} (zero , cᵢ) ⟩
+            toℕ× {2}{1} (zero , cᵢ)
+          ≡⟨⟩
+            0 + 1 * toℕ cᵢ
+          ≡⟨⟩
+            toℕ cᵢ + 0
+          ≡⟨ cong (_+ 0) (sym (+-identityʳ (toℕ cᵢ))) ⟩
+            toℕ cᵢ + 0 + 0
+          ∎
 
 _,̂_ : ∀ {r s} → (𝔽 2 × r × r → r × 𝔽 2)
               → (𝔽 2 × s × s → s × 𝔽 2)
@@ -278,6 +348,44 @@ infixr 2 _ː_
 _ː_ : ∀ {m n}{r s} (μᵣ : r → 𝔽 m) (μₛ : s → 𝔽 n) → (r × s → 𝔽 (m * n))
 μᵣ ː μₛ = comb ∘ (μᵣ ⊗ μₛ)
 -- (μᵣ ː μₛ) (zᵣ , zₛ) = combine (μᵣ zᵣ) (μₛ zₛ)
+
+-- infixr 2 _×ᶜ_
+-- _×ᶜ_ : Adder → Adder → Adder
+
+
+-- toℕ× {k}{m} (i , cₒ) = toℕ i + m * toℕ cₒ
+
+-- toℕ-comb : ∀ {m k} → toℕ ∘ comb ≡ toℕ× {k}{m}
+
+-- commute : (toℕ ∘ comb ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
+
+
+-- mk {mᵣ}{r}{μᵣ} +̂ᵣ +̃ᵣ ×ᶜ mk {mₛ}{s}{μₛ} +̂ₛ +̃ₛ =
+--   mk {mᵣ * mₛ} {r × s} {μᵣ ː μₛ} (+̂ᵣ ,̂ +̂ₛ) λ (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ)) →
+--     let zᵣ , cₘ = +̂ᵣ (cᵢ , xᵣ , yᵣ)
+--         zₛ , cₒ = +̂ₛ (cₘ , xₛ , yₛ) in
+
+--      begin
+--        ((toℕ× ∘ first (μᵣ ː μₛ)) ∘ (+̂ᵣ ,̂ +̂ₛ)) (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ))
+--      ≡⟨⟩
+--        (toℕ× ∘ first (μᵣ ː μₛ)) ((zᵣ , zₛ) , cₒ)
+--      ≡⟨⟩
+--        toℕ× ((μᵣ ː μₛ) (zᵣ , zₛ) , cₒ)
+--      ≡⟨⟩
+--        toℕ× (combine (μᵣ zᵣ) (μₛ zₛ) , cₒ)
+--      ≡⟨ {!!} ⟩
+--        toℕ cᵢ + toℕ (combine (μᵣ xᵣ) (μₛ xₛ)) + toℕ (combine (μᵣ yᵣ) (μₛ yₛ))
+--      ≡⟨⟩
+--        toℕ cᵢ + toℕ ((μᵣ ː μₛ) (xᵣ , xₛ)) + toℕ ((μᵣ ː μₛ) (yᵣ , yₛ))
+--      ≡⟨⟩
+--        (addℕ ∘ (toℕ ⊗ twice (toℕ ∘ (μᵣ ː μₛ)))) (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ))
+--      ∎
+
+
+```
+
+```agdaQ
+
 
 infixr 2 _×ᶜ_
 _×ᶜ_ : Adder → Adder → Adder
@@ -293,13 +401,13 @@ mk {mᵣ}{r}{μᵣ} +̂ᵣ +̃ᵣ ×ᶜ mk {mₛ}{s}{μₛ} +̂ₛ +̃ₛ =
 --     in (zᵣ , zₛ) , cₒ
 
      begin
-       ((toℕ⊹☆ ∘ first (μᵣ ː μₛ)) ∘ (+̂ᵣ ,̂ +̂ₛ)) (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ))
+       ((toℕ× ∘ first (μᵣ ː μₛ)) ∘ (+̂ᵣ ,̂ +̂ₛ)) (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ))
      ≡⟨⟩
-       (toℕ⊹☆ ∘ first (μᵣ ː μₛ)) ((zᵣ , zₛ) , cₒ)
+       (toℕ× ∘ first (μᵣ ː μₛ)) ((zᵣ , zₛ) , cₒ)
      ≡⟨⟩
-       toℕ⊹☆ ((μᵣ ː μₛ) (zᵣ , zₛ) , cₒ)
+       toℕ× ((μᵣ ː μₛ) (zᵣ , zₛ) , cₒ)
      ≡⟨⟩
-       toℕ⊹☆ (combine (μᵣ zᵣ) (μₛ zₛ) , cₒ)
+       toℕ× (combine (μᵣ zᵣ) (μₛ zₛ) , cₒ)
      ≡⟨ {!!} ⟩
        toℕ cᵢ + toℕ (combine (μᵣ xᵣ) (μₛ xₛ)) + toℕ (combine (μᵣ yᵣ) (μₛ yₛ))
      ≡⟨⟩
@@ -308,7 +416,7 @@ mk {mᵣ}{r}{μᵣ} +̂ᵣ +̃ᵣ ×ᶜ mk {mₛ}{s}{μₛ} +̂ₛ +̃ₛ =
        (addℕ ∘ (toℕ ⊗ twice (toℕ ∘ (μᵣ ː μₛ)))) (cᵢ , (xᵣ , xₛ) , (yᵣ , yₛ))
      ∎
 
-    -- commute : (toℕ⊹☆ ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
+    -- commute : (toℕ× ∘ first μ) ∘ +̂ ≗ addℕ ∘ (toℕ ⊗ twice (toℕ ∘ μ)) 
 
 
     -- (μᵣ ː μₛ) (xᵣ , xₛ) = combine (μᵣ xᵣ) (μₛ xₛ)
@@ -316,23 +424,23 @@ mk {mᵣ}{r}{μᵣ} +̂ᵣ +̃ᵣ ×ᶜ mk {mₛ}{s}{μₛ} +̂ₛ +̃ₛ =
    
     -- combine (μᵣ xᵣ) (μₛ xₛ)
 
-    -- toℕ⊹☆ (combine i j , cₒ)
+    -- toℕ× (combine i j , cₒ)
 
 
      -- (μᵣ ː μₛ) (zᵣ , zₛ) = combine (μᵣ zᵣ) (μₛ zₛ)
      
 
 
--- Goal: (toℕ⊹☆ ∘′ first (μᵣ ː μₛ)) ∘′ (+̂ᵣ ,̂ +̂ₛ) ≗
+-- Goal: (toℕ× ∘′ first (μᵣ ː μₛ)) ∘′ (+̂ᵣ ,̂ +̂ₛ) ≗
 --       addℕ ∘′ (toℕ ⊗ twice (toℕ ∘′ (μᵣ ː μₛ)))
 -- ————————————————————————————————————————————————————————————
--- +̃ₛ : (toℕ⊹☆ ∘′ first μₛ) ∘′ +̂ₛ ≗
+-- +̃ₛ : (toℕ× ∘′ first μₛ) ∘′ +̂ₛ ≗
 --       addℕ ∘′ (toℕ ⊗ twice (toℕ ∘′ μₛ))
 -- +̂ₛ : 𝔽 2 ×′ s ×′ s → s ×′ 𝔽 2
 -- μₛ  : s → 𝔽 mₛ
 -- s   : Set
 -- mₛ  : ℕ
--- +̃ᵣ : (toℕ⊹☆ ∘′ first μᵣ) ∘′ +̂ᵣ ≗
+-- +̃ᵣ : (toℕ× ∘′ first μᵣ) ∘′ +̂ᵣ ≗
 --       addℕ ∘′ (toℕ ⊗ twice (toℕ ∘′ μᵣ))
 -- +̂ᵣ : 𝔽 2 ×′ r ×′ r → r ×′ 𝔽 2
 -- μᵣ  : r → 𝔽 mᵣ
