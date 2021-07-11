@@ -29,6 +29,7 @@ private
     prodH = id-ProductsH
 
     cartH : CartesianH _↠_ _↠_
+
     cartH = id-CartesianH
 
     -- TODO: Replace Hₒ, H, etc by a bundle
