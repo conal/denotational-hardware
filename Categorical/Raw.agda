@@ -47,11 +47,14 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
   _⊗_ : (a ⇨ c) → (b ⇨ d) → (a × b ⇨ c × d)
   f ⊗ g = f ∘ exl ▵ g ∘ exr
 
-  first : a ⇨ c → a × b ⇨ c × b
+  first : (a ⇨ c) → (a × b ⇨ c × b)
   first f = f ⊗ id
 
-  second : b ⇨ d → a × b ⇨ a × d
+  second : (b ⇨ d) → (a × b ⇨ a × d)
   second g = id ⊗ g
+
+  twice : (a ⇨ c) → (a × a ⇨ c × c)
+  twice f = f ⊗ f
 
   unitorᵉˡ : ⊤ × a ⇨ a
   unitorᵉˡ = exr
