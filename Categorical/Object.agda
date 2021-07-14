@@ -5,7 +5,7 @@ module Categorical.Object where
 open import Level using (Level; lift; _⊔_) renaming (suc to lsuc)
 open import Function
 
-open import Data.Nat hiding (_⊔_)
+open import Data.Nat hiding (_⊔_; _+_)
 
 private
   variable
@@ -30,6 +30,14 @@ record Products (obj : Set o) : Set (lsuc o) where
   T A n = ((λ z → z × z) ↑ n) A
 
 open Products ⦃ … ⦄ public
+
+record CoProducts (obj : Set o) : Set (lsuc o) where
+  infixr 2 _+_
+  field
+    ⊥ : obj
+    _+_ : obj → obj → obj
+
+open CoProducts ⦃ … ⦄ public
 
 record Exponentials (obj : Set o) : Set (lsuc o) where
   infixr 1 _⇛_
