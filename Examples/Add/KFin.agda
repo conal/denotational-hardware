@@ -256,13 +256,15 @@ addℕ×₂ kᵣ kₛ =
       (first (combℕ kᵣ) ∘ add× kᵣ kₛ) q
     ∎
 
--- Hm. I think quotRem∘combℕ (kₛ * kᵣ) holds only when values involved are
--- within bounds.
--- 
--- Maybe instead of using quotRem∘combℕ I need *not* to use comb∘quotRemℕ.
+-- I think quotRem∘combℕ k requires values to be are within bounds.
 
 -- adder : ∀ {k} ⦃ _ : k ≢0 ⦄ {r : Set} {μ : r → ℕ} (+̂ : C r)
 --       → (μ ⊗ bval) ∘ +̂ ≗ addcℕ k ∘ (bval ⊗ twice μ)
 --       → Adder k {r}{μ}
 -- adder {k} +̂ commute = mk (addᶜ⇉ k +̂ commute)
 
+-- Maybe instead change the commutativity condition to match addℕ×
+
+-- adder : ∀ {k} ⦃ _ : k ≢0 ⦄ {r : Set} {μ : r → ℕ} (+̂ : C r)
+--       → combℕ k ∘ (μ ⊗ bval) ∘ +̂ ≗ addℕ k ∘ (bval ⊗ twice μ)
+--       → Adder k {r}{μ}
