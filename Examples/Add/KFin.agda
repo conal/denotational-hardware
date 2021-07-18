@@ -65,14 +65,6 @@ m ≢0 = False (m ℕP.≟ 0)
 quotRemℕ : ∀ n → ⦃ n≢0 : n ≢0 ⦄ → ℕ → ℕ × ℕ
 quotRemℕ (suc n) m = m % suc n , m / suc n
 
--- -- Equivalently,
--- quotRemℕ n ⦃ n≢0 ⦄ m = (m % n) {n≢0} , (m / n) {n≢0}
-
--- Alternatively,
-quotRemℕ′ : ∀ n → ℕ → ℕ × ℕ
-quotRemℕ′ n m = m % suc n , m / suc n
--- I'm leaning toward this simpler alternative.
-
 qrℕ2 : ℕ → ℕ × ℕ
 qrℕ2 = quotRemℕ 2
 
@@ -99,20 +91,21 @@ addcℕ k = quotRemℕ k ∘ addℕ
 _ : ∀ {k} ⦃ _ : k ≢0 ⦄ → f₁ (addcℕ⇉ k) ≡ addcℕ k
 _ = refl
 
-B : Set
-B = Bool
+𝔹 : Set
+𝔹 = Bool
 
-bval : B → ℕ
+bval : 𝔹 → ℕ
 bval 𝕗 = 0
 bval 𝕥 = 1
 
 C : Set → Set
-C r = B × r × r → r × B
+C r = 𝔹 × r × r → r × 𝔹
 
 addᶜ⇉ : ∀ k ⦃ _ : k ≢0 ⦄ {r : Set} {μ : r → ℕ} (+̂ : C r)
       → (μ ⊗ bval) ∘ +̂ ≗ addcℕ k ∘ (bval ⊗ twice μ)
       → bval ⊗ twice μ ⇉ μ ⊗ bval
 addᶜ⇉ k +̂ = mk +̂ (addcℕ k)
+
 
 record Adder k ⦃ _ : k ≢0 ⦄ {r : Set}{μ : r → ℕ} : Set where
   constructor mk
@@ -127,29 +120,21 @@ adder {k} +̂ commute = mk (addᶜ⇉ k +̂ commute)
 
 pattern adderᵖ +̂ commute = mk (mk +̂ _ commute)
 
--- Save some typing. Replace later.
-
-F : ℕ → Set
-F = 𝔽
-
-N : Set
-N = ℕ
-
 0ᶜ : Adder 1 {⊤}{λ { tt → zero }}
 0ᶜ = adder (λ (cᵢ , tt , tt) → tt , cᵢ)
            λ {(𝕗 , tt , tt) → refl ; (𝕥 , tt , tt) → refl}
 
-import Data.Bool as B
-
 1ᶜ : Adder 2
 1ᶜ = adder +̂ comm
  where
-   ½̂ : B × B → B × B
-   ½̂ (a , b) = a B.xor b , a B.∧ b
+   import Data.Bool as 𝔹
 
-   +̂ : C B
+   ½̂ : 𝔹 × 𝔹 → 𝔹 × 𝔹
+   ½̂ (a , b) = a 𝔹.xor b , a 𝔹.∧ b
+
+   +̂ : C 𝔹
    +̂ (cᵢ , a , b) = let p , d = ½̂ (a , b) ; q , e = ½̂ (cᵢ , p) in
-     q , e B.∨ d
+     q , e 𝔹.∨ d
 
    -- -- In categorical terms,
    -- ½̂ = xor ▵ ∧
