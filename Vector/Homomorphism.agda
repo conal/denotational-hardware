@@ -16,7 +16,7 @@ open import Functions
 
 open import Vector.Raw {A} public
 
-private
+module vec-laws where
 
   app : ∀ {m n : ℕ} → Vec A m × Vec A n → Vec A (m + n)
   app (u , v) = u ++ v
@@ -49,8 +49,12 @@ private
   app⁻¹∘app : ∀ {m n : ℕ} → app⁻¹ ∘ app {m}{n} ≈ id
   app⁻¹∘app {m} uv = cong₂ _,_ (take∘app uv) (drop∘app uv)
 
+  app∘app⁻¹ : ∀ {m n : ℕ} → app {m}{n} ∘ app⁻¹ ≈ id
+  app∘app⁻¹ {m} = take-drop-id m
 
 module vec-homomorphism-instances where
+
+  open vec-laws
 
   instance
 
@@ -69,7 +73,7 @@ module vec-homomorphism-instances where
       ; ε⁻¹∘ε = λ { tt → refl }
       ; ε∘ε⁻¹ = λ { [] → refl } 
       ; μ⁻¹∘μ = app⁻¹∘app
-      ; μ∘μ⁻¹ = λ {a = m} → take-drop-id m
+      ; μ∘μ⁻¹ = λ {a} → app∘app⁻¹ {a}
       }
 
     cartesian : CartesianH _⇨_ Function
