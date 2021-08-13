@@ -16,8 +16,10 @@ open import Categorical.Homomorphism
 open import Functions.Raw
 open import Functions.Laws
 open import Vector.Laws {A} renaming (_⇨_ to _↠_)
+
+open import VRouting.Swizzle
+open import VRouting.Swizzle.Properties
 open import VRouting.Raw {A} public ; open _⇨_
-open import VRouting.Swizzle ; open swizzle-laws
 
 module vrouting-homomorphism-instances where
 

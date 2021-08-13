@@ -14,8 +14,8 @@ open import Functions.Raw
 
 open import Vector.Raw {A} hiding (_⇨_)
 
-open import VRouting.Type {A} public
 open import VRouting.Swizzle
+open import VRouting.Type {A} public
 
 module vrouting-raw-instances where
 
