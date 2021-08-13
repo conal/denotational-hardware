@@ -15,14 +15,14 @@ module vec-raw-instances where
 
   instance
 
-    products : Products ℕ
-    products = record { ⊤ = zero ; _×_ = _+_ }
-
     category : Category _⇨_
     category = record
       { id  = mk id
       ; _∘_ = λ (mk g) (mk f) → mk (g ∘ f)
       }
+
+    products : Products ℕ
+    products = record { ⊤ = zero ; _×_ = _+_ }
 
     cartesian : Cartesian _⇨_
     cartesian =

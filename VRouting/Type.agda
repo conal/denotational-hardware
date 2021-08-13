@@ -15,13 +15,7 @@ private
   variable
     m n : ℕ
 
-Swizzle : ℕ → ℕ → Set
-Swizzle m n = Vec (Fin m) n
-
-swizzle : Swizzle m n → Vec A m → Vec A n
-swizzle s xs = map (lookup xs) s
-
--- TODO: maybe make swizzle yield m ↠ n
+open import VRouting.Swizzle
 
 infix 0 _⇨_
 record _⇨_ (m n : ℕ) : Set where

@@ -15,6 +15,7 @@ open import Functions.Raw
 open import Vector.Raw {A} hiding (_⇨_)
 
 open import VRouting.Type {A} public
+open import VRouting.Swizzle
 
 module vrouting-raw-instances where
 
@@ -23,7 +24,7 @@ module vrouting-raw-instances where
     category : Category _⇨_
     category = record
       { id  = mk (allFin _)
-      ; _∘_ = λ (mk g) (mk f) → mk (map (lookup f) g)
+      ; _∘_ = λ (mk g) (mk f) → mk (swizzle g f)
       }
 
     cartesian : Cartesian _⇨_

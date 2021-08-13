@@ -77,4 +77,3 @@ instance
          n = size {Q}
          open ≡-Reasoning
          open vec-laws
-
