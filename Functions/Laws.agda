@@ -3,12 +3,12 @@
 module Functions.Laws where
 
 open import Function.Equivalence hiding (id; _∘_)
+open import Axiom.Extensionality.Propositional
 
 open import Categorical.Raw hiding (Category; Cartesian; CartesianClosed)
 open import Categorical.Laws
 open import Categorical.Equiv
 open import Functions.Raw public
-open import Axiom.Extensionality.Propositional
 
 module →-laws-instances where
 
