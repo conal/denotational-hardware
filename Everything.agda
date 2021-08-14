@@ -18,10 +18,10 @@ import Ty
 import Primitive
 import Routing
 import Linearize
-import SSA
-import Dot
+-- import SSA
+-- import Dot
 
-import Examples.Add
-import Examples.Add.Properties
+-- import Examples.Add
+-- import Examples.Add.Properties
 
-import Test
+-- import Test
