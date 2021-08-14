@@ -1,13 +1,13 @@
 {-# OPTIONS --safe --without-K #-}
 
-module VRouting.Laws {A : Set} where
+module Routing.Laws {A : Set} where
 
 open import Categorical.Raw
 import Categorical.Laws as L
 open import Categorical.MakeLawful
 
 open import Vector.Laws {A} renaming (_⇨_ to _↠_)
-open import VRouting.Homomorphism {A} public
+open import Routing.Homomorphism {A} public
 
 -- Inherit lawfulness from vector functions
 

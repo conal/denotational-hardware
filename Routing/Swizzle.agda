@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
-module VRouting.Swizzle where
+module Routing.Swizzle where
 
 open import Data.Nat
 open import Data.Fin

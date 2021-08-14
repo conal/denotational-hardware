@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
-module VRouting.Type {A : Set} where
+module Routing.Type {A : Set} where
 
 open import Data.Nat
 open import Data.Fin
@@ -15,7 +15,7 @@ private
   variable
     m n : ℕ
 
-open import VRouting.Swizzle
+open import Routing.Swizzle
 
 infix 0 _⇨_
 record _⇨_ (m n : ℕ) : Set where

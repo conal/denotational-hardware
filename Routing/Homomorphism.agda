@@ -1,9 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
--- open import Data.Product using (_,_)
--- open import Relation.Binary.PropositionalEquality renaming (refl to refl≡)
-
-module VRouting.Homomorphism {A : Set} where
+module Routing.Homomorphism {A : Set} where
 
 open import Data.Nat
 open import Data.Fin hiding (_+_)
@@ -17,9 +14,9 @@ open import Functions.Raw
 open import Functions.Laws
 open import Vector.Laws {A} renaming (_⇨_ to _↠_)
 
-open import VRouting.Swizzle
-open import VRouting.Swizzle.Properties
-open import VRouting.Raw {A} public ; open _⇨_
+open import Routing.Swizzle
+open import Routing.Swizzle.Properties
+open import Routing.Raw {A} public ; open _⇨_
 
 module vrouting-homomorphism-instances where
 

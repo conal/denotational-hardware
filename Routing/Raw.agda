@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
-module VRouting.Raw {A : Set} where
+module Routing.Raw {A : Set} where
 
 open import Data.Nat
 open import Data.Fin hiding (_+_)
@@ -14,8 +14,8 @@ open import Functions.Raw
 
 open import Vector.Raw {A} hiding (_⇨_)
 
-open import VRouting.Swizzle
-open import VRouting.Type {A} public
+open import Routing.Swizzle
+open import Routing.Type {A} public
 
 module vrouting-raw-instances where
 

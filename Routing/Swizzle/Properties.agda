@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
-module VRouting.Swizzle.Properties {A : Set} where
+module Routing.Swizzle.Properties {A : Set} where
 
 open import Data.Product using (uncurry) renaming (<_,_> to _▵_)
 open import Data.Nat
@@ -10,7 +10,7 @@ open import Data.Vec.Properties
 open import Relation.Binary.PropositionalEquality ; open ≡-Reasoning
 open import Function
 
-open import VRouting.Swizzle
+open import Routing.Swizzle
 
 swizzle-allFin : ∀ {a} → swizzle {A} (allFin a) ≗ id
 swizzle-allFin = map-lookup-allFin
