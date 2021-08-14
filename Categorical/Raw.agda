@@ -143,7 +143,7 @@ record CartesianClosed {obj : Set o}
 open CartesianClosed ⦃ … ⦄ public
 
 
-record Logic {obj : Set o} ⦃ products : Products obj ⦄ ⦃ boolean : Boolean obj ⦄
+record Logic {obj : Set o} ⦃ _ : Products obj ⦄ ⦃ _ : Boolean obj ⦄
              (_⇨′_ : obj → obj → Set ℓ) : Set (o ⊔ ℓ) where
   private infix 0 _⇨_; _⇨_ = _⇨′_
   field

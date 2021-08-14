@@ -4,7 +4,7 @@ module Functions.Laws where
 
 open import Function.Equivalence hiding (id; _∘_)
 
-open import Categorical.Raw hiding (Category; Cartesian; CartesianClosed)
+open import Categorical.Raw as R hiding (Category; Cartesian; CartesianClosed; Logic)
 open import Categorical.Laws
 open import Categorical.Equiv
 open import Functions.Raw public
@@ -49,3 +49,69 @@ module →-laws-instances where
             (λ f≈uncurry-g x → extensionality λ y → sym≡ (f≈uncurry-g (x , y)))
         ; curry≈ = λ f≈g x → extensionality λ y → f≈g (x , y)
         }
+
+    logic : Logic Function
+    logic = record
+      { ∨-commutative = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; ∧-commutative = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; xor-commutative = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; ∨-annihilatorˡ = λ x → refl≡
+      ; ∧-annihilatorˡ = λ x → refl≡
+      ; ∨-idˡ = λ x → refl≡
+      ; ∧-idˡ = λ x → refl≡
+      ; ∨-idempotence = λ
+          { 𝕗 → refl≡
+          ; 𝕥 → refl≡
+          }
+      ; ∧-idempotence = λ
+          { 𝕗 → refl≡
+          ; 𝕥 → refl≡
+          }
+      ; de-morganŝ = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; de-morganš = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; not∘not≈id = λ
+          { 𝕗 → refl≡
+          ; 𝕥 → refl≡
+          }
+      ; ∧∨-xor = λ
+          { (𝕗 , 𝕗) → refl≡
+          ; (𝕗 , 𝕥) → refl≡
+          ; (𝕥 , 𝕗) → refl≡
+          ; (𝕥 , 𝕥) → refl≡
+          }
+      ; condˡ = λ x → refl≡
+      ; condʳ = λ x → refl≡
+      } where
+          ∨-idʳ-aux : ∀ { any : ⊤ → Bool } → ∨ ∘ (any ▵ true) ≈ true
+          ∨-idʳ-aux {any} x with (any x)
+          ... | 𝕗 = refl≡
+          ... | 𝕥 = refl≡
+          ∧-idʳ-aux : ∀ { any : ⊤ → Bool } → ∧ ∘ (any ▵ false) ≈ false
+          ∧-idʳ-aux {any} x with (any x)
+          ... | 𝕗 = refl≡
+          ... | 𝕥 = refl≡

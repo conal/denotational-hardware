@@ -3,12 +3,12 @@
 module Categorical.Laws where
 
 open import Level
+
+open import Categorical.Raw as R hiding (Category; Cartesian; CartesianClosed; Logic)
+open import Categorical.Equiv
 open import Relation.Binary.PropositionalEquality using (_≡_)
 open import Function.Equivalence using (_⇔_; module Equivalence)
 open import Function.Equality using (_⟨$⟩_)
-
-open import Categorical.Raw as R hiding (Category; Cartesian; CartesianClosed)
-open import Categorical.Equiv
 open import Functions.Raw
 
 open Equivalence
@@ -147,6 +147,18 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
       h ∘ f ▵ k ∘ g
     ∎
 
+  swap-▵ : ∀ { f : a ⇨ b } { g : a ⇨ c } → swap ∘ (f ▵ g) ≈ (g ▵ f)
+  swap-▵ {f = f} {g} =
+    begin
+      swap ∘ (f ▵ g)
+    ≡⟨⟩
+      (exr ▵ exl) ∘ (f ▵ g)
+    ≈⟨ ▵∘ ⟩
+      (exr ∘ (f ▵ g) ▵ exl ∘ (f ▵ g))
+    ≈⟨ ▵≈ exr∘▵ exl∘▵ ⟩
+      g ▵ f
+    ∎
+
 open Cartesian ⦃ … ⦄ public
 
 record CartesianClosed {obj : Set o} ⦃ _ : Products obj ⦄
@@ -187,4 +199,103 @@ record CartesianClosed {obj : Set o} ⦃ _ : Products obj ⦄
                        uncurry id
                      ∎)
 
--- TODO: Logic
+open CartesianClosed ⦃ … ⦄ public
+
+record Logic {obj : Set o} ⦃ _ : Products obj ⦄
+             ⦃ _ : Boolean obj ⦄ (_⇨′_ : obj → obj → Set ℓ)
+             {q} ⦃ _ : Equivalent q _⇨′_ ⦄
+             ⦃ _ : R.Cartesian _⇨′_ ⦄
+             ⦃ _ : Cartesian _⇨′_ ⦄
+             ⦃ _ : R.Logic _⇨′_ ⦄
+       : Set (suc o ⊔ ℓ ⊔ suc q) where
+  private
+    infix 0 _⇨_; _⇨_ = _⇨′_
+    infix 4 _≋_
+    _≋_ : (f g : a ⇨ b) → Set q -- Forces _≈_ to use the correct _⇨_ type
+    _≋_ = _≈_
+
+  field
+    ∨-commutative : ∨ ∘ swap ≋ ∨
+    ∧-commutative : ∧ ∘ swap ≋ ∧
+    xor-commutative : xor ∘ swap ≋ xor
+
+    ∨-annihilatorˡ : ∀ { any : ⊤ ⇨ Bool } → ∨ ∘ (true ▵ any) ≋ true
+    ∧-annihilatorˡ : ∀ { any : ⊤ ⇨ Bool } → ∧ ∘ (false ▵ any) ≋ false
+
+    ∨-idˡ : ∀ {g : ⊤ ⇨ Bool} → ∨ ∘ (false ▵ g) ≋ g
+    ∧-idˡ : ∀ {g : ⊤ ⇨ Bool} → ∧ ∘ (true  ▵ g) ≋ g
+
+    ∨-idempotence : ∨ ∘ dup ≋ id
+    ∧-idempotence : ∧ ∘ dup ≋ id
+
+    -- TODO: Once we have CoCartesian Categories
+    -- ∨-dist-∧ : x ∨ (y ∧ z) ≋ (x ∨ y) ∧ (x ∨ z)
+    -- ∧-dist-∨ : x ∧ (y ∧ z) ≋ (x ∧ y) ∨ (x ∧ z)
+
+    de-morganŝ : not ∘ ∨ ≋ ∧ ∘ (not ⊗ not)
+    de-morganš : not ∘ ∧ ≋ ∨ ∘ (not ⊗ not)
+
+    not∘not≈id : not ∘ not ≋ id
+
+    -- A xor B ≋ ( A ∨ B ) ∧ (not ( A ∧ B ))
+    ∧∨-xor : xor ≋ ∧ ∘ (∨ ▵ not ∘ ∧)
+
+    condˡ : ∀ { a : obj } → cond ∘ first false ≋ exl {a = a} ∘ unitorᵉˡ
+    condʳ : ∀ { a : obj } → cond ∘ first true  ≋ exr {a = a} ∘ unitorᵉˡ
+
+
+  ∨-annihilatorʳ : ∀ { any : ⊤ ⇨ Bool } → ∨ ∘ (any ▵ true) ≋ true
+  ∨-annihilatorʳ {any} =
+    begin
+      ∨ ∘ (any ▵ true)
+    ≈⟨ ∘≈ˡ (sym ∨-commutative) ⟩
+      (∨ ∘ swap) ∘ (any ▵ true)
+    ≈⟨ ∘-assocʳ ⟩
+      ∨ ∘ (swap ∘ (any ▵ true))
+    ≈⟨ ∘≈ʳ swap-▵ ⟩
+      ∨ ∘ (true ▵ any)
+    ≈⟨ ∨-annihilatorˡ ⟩
+      true
+    ∎
+
+  ∧-annihilatorʳ : ∀ { any : ⊤ ⇨ Bool } → ∧ ∘ (any ▵ false) ≋ false
+  ∧-annihilatorʳ {any} =
+    begin
+      ∧ ∘ (any ▵ false)
+    ≈⟨ ∘≈ˡ (sym ∧-commutative) ⟩
+      (∧ ∘ swap) ∘ (any ▵ false)
+    ≈⟨ ∘-assocʳ ⟩
+      ∧ ∘ (swap ∘ (any ▵ false))
+    ≈⟨ ∘≈ʳ swap-▵ ⟩
+      ∧ ∘ (false ▵ any)
+    ≈⟨ ∧-annihilatorˡ ⟩
+      false
+    ∎
+
+  ∨-idʳ : ∀ {f : ⊤ ⇨ Bool} → ∨ ∘ (f ▵ false) ≋ f
+  ∨-idʳ {f} =
+    begin
+      ∨ ∘ (f ▵ false)
+    ≈⟨ ∘≈ˡ (sym ∨-commutative) ⟩
+      (∨ ∘ swap) ∘ (f ▵ false)
+    ≈⟨ ∘-assocʳ ⟩
+      ∨ ∘ (swap ∘ (f ▵ false))
+    ≈⟨ ∘≈ʳ swap-▵ ⟩
+      ∨ ∘ (false ▵ f)
+    ≈⟨ ∨-idˡ ⟩
+      f
+    ∎
+
+  ∧-idʳ : ∀ {f : ⊤ ⇨ Bool} → ∧ ∘ (f ▵ true) ≋ f
+  ∧-idʳ {f} =
+    begin
+      ∧ ∘ (f ▵ true)
+    ≈⟨ ∘≈ˡ (sym ∧-commutative) ⟩
+      (∧ ∘ swap) ∘ (f ▵ true)
+    ≈⟨ ∘-assocʳ ⟩
+      ∧ ∘ (swap ∘ (f ▵ true))
+    ≈⟨ ∘≈ʳ swap-▵ ⟩
+      ∧ ∘ (true ▵ f)
+    ≈⟨ ∧-idˡ ⟩
+      f
+    ∎
