@@ -1,4 +1,5 @@
 {-# OPTIONS --safe --without-K #-}
+-- Conversion to and from vectors
 
 module Vector.Flat {A : Set} where
 

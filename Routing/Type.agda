@@ -1,43 +1,35 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Routing.Type where
+module VRouting.Type {A : Set} where
 
-open import Level using (0ℓ)
-open import Data.Empty
-open import Data.Sum
-open import Data.Product using (_,_)
+open import Data.Nat
+open import Data.Fin
+open import Data.Vec
 
 open import Categorical.Raw
 open import Categorical.Equiv
 open import Functions.Raw
--- open import Fun.Type renaming (_⇨_ to _⇨ₜ_)
-
-open import Ty
-open import Index
+open import Vector.Type {A} renaming (_⇨_ to _↠_)
 
 private
   variable
-    a b : Ty
-    h : Ty → Set
+    m n : ℕ
+
+open import VRouting.Swizzle
 
 infix 0 _⇨_
-record _⇨_ (a b : Ty) : Set where
+record _⇨_ (m n : ℕ) : Set where
   constructor mk
   field
-    unMk : Swizzle a b
+    unMk : Swizzle m n
 
-open _⇨_ public
 
-⟦_⟧′ : a ⇨ b → Indexed h a → Indexed h b
-⟦_⟧′ = swizzle′ ∘ unMk
--- ⟦ mk f ⟧′ = swizzle′ f
+module vrouting-instances where
 
-instance
+  instance
 
-  homomorphism : Homomorphism _⇨_ Function
-  homomorphism = record { Fₘ = swizzle ∘ unMk }
-  -- homomorphism = record { Fₘ = λ (mk r) → swizzle r }
+    H : Homomorphism _⇨_ _↠_
+    H = record { Fₘ = mk ∘ swizzle ∘ unMk } where open _⇨_
 
-  -- TODO: Generalize routing to any target category with Ty as objects. Later
-  -- to any Cartesian category.
-
+    equivalent : Equivalent _ _⇨_
+    equivalent = H-equiv H
