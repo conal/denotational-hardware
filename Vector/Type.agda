@@ -2,6 +2,8 @@
 
 module Vector.Type {A : Set} where
 
+open import Data.Product using (_,_)
+
 open import Categorical.Raw
 open import Categorical.Homomorphism
 open import Functions.Raw
@@ -30,3 +32,10 @@ module vector-instances where
 
     equivalent : Equivalent _ _⇨_
     equivalent = H-equiv H
+
+
+app : ∀ {m n : ℕ} → Vec A m × Vec A n → Vec A (m + n)
+app (u , v) = u ++ v
+
+app⁻¹ : ∀ {m n : ℕ} → Vec A (m + n) → Vec A m × Vec A n
+app⁻¹ {m} = take m ▵ drop m

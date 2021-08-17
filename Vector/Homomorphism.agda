@@ -18,12 +18,6 @@ open import Vector.Raw {A} public
 
 module vec-laws where
 
-  app : ∀ {m n : ℕ} → Vec A m × Vec A n → Vec A (m + n)
-  app (u , v) = u ++ v
-
-  app⁻¹ : ∀ {m n : ℕ} → Vec A (m + n) → Vec A m × Vec A n
-  app⁻¹ {m} = take m ▵ drop m
-
   take∘app : ∀ {m n : ℕ} → take m {n} ∘ app ≈ exl
   take∘app {zero } {n} ([] , v) = refl
   take∘app {suc m} {n} (x ∷ u , v) =
