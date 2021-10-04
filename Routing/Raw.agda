@@ -1,29 +1,36 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Routing.Raw where
+module Routing.Raw {A : Set} where
 
-open import Level using (0ℓ)
-open import Data.Product using (_,_)
-import Data.Sum as ⊎
-open ⊎
-open import Relation.Binary.PropositionalEquality renaming (refl to refl≡)
+open import Data.Nat
+open import Data.Fin hiding (_+_)
+open import Data.Vec
+open import Function using (case_of_)
+
+open import Data.Sum using ([_,_])
 
 open import Categorical.Raw
 open import Functions.Raw
 
-open import Ty
-open import Index
-open import Routing.Type public
+open import Vector.Raw {A} hiding (_⇨_)
 
-instance
+open import Routing.Swizzle
+open import Routing.Type {A} public
 
-  category : Category _⇨_
-  category = record { id = mk id ; _∘_ = λ (mk g) (mk f) → mk (f ∘ g) }
+module vrouting-raw-instances where
 
-  cartesian : Cartesian _⇨_
-  cartesian = record
-    { !   = mk λ ()
-    ; _▵_ = λ (mk f) (mk g) → mk λ { (left i) → f i ; (right j) → g j }
-    ; exl = mk left
-    ; exr = mk right
-    }
+  instance
+
+    category : Category _⇨_
+    category = record
+      { id  = mk (allFin _)
+      ; _∘_ = λ (mk g) (mk f) → mk (swizzle g f)
+      }
+
+    cartesian : Cartesian _⇨_
+    cartesian = record
+      { !   = mk []
+      ; _▵_ = λ (mk f) (mk g) → mk (f ++ g)
+      ; exl = mk (tabulate (inject+ _))
+      ; exr = mk (tabulate ( raise  _))
+      }
