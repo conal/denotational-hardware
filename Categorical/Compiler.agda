@@ -1,20 +1,21 @@
 open import Level
 
-open import Functions
-import Functions.Raw as F
-open import Categorical.Raw
-open import Categorical.Equiv
-open import Categorical.Laws as L
-  hiding (Category; Cartesian; CartesianClosed; Logic)
-open import Categorical.Homomorphism
+-- Here we import all the needed categorical machinery under the C namespace
+import Categorical.Raw as C
+import Categorical.Equiv as C
+import Categorical.Laws as C renaming (Category to CategoryLaws)
+import Categorical.Homomorphism as C
+
+-- And the category of sets and functions under F
+import Functions as F
 
 module Categorical.Compiler
   {o}{obj : Set o}{ℓ}(_⇨_ : obj → obj → Set ℓ)
-    ⦃ c : Category _⇨_ ⦄
-    {q} ⦃ _ : Equivalent q _⇨_ ⦄
-    ⦃ _ : L.Category _⇨_ ⦄
-    {ℓₛ}⦃ hₒ : Homomorphismₒ obj (Set ℓₛ) ⦄ ⦃ h : Homomorphism _⇨_ (Function ℓₛ) ⦄
-    ⦃ H : CategoryH _⇨_ (Function ℓₛ) {_}
+    ⦃ c : C.Category _⇨_ ⦄
+    {q} ⦃ cEq : C.Equivalent q _⇨_ ⦄
+    ⦃ cLaws : C.CategoryLaws _⇨_ ⦄
+    {ℓₛ}⦃ hₒ : C.Homomorphismₒ obj (Set ℓₛ) ⦄ ⦃ h : C.Homomorphism _⇨_ (F.Function ℓₛ) ⦄
+    ⦃ H : C.CategoryH _⇨_ (F.Function ℓₛ) {_}
            ⦃ F.→-raw-instances.equivalent ℓₛ ⦄ ⦃ c ⦄ ⦃ F.→-raw-instances.category ℓₛ ⦄ ⦄
  where
 
@@ -25,29 +26,44 @@ open import Axiom.Extensionality.Propositional
 import Relation.Binary.PropositionalEquality as PEq
 
 open import Reflection
+open import Reflection.Name
+open import Reflection.Term
+open import Reflection.Argument
+open import Reflection.DeBruijn
 open import Reflection.TypeChecking.Monad.Syntax
 
--- First, we somehow need a mapping from Sets into the objects of the category
--- we're compiling to
-module WithInv
-  ⦃ inv-hₒ : Homomorphismₒ (Set ℓₛ) obj ⦄
-  ( is-inv : {A : Set ℓₛ} → Fₒ (Fₒ A) PEq.≡ A )
-  where
+open F.→-raw-instances ℓₛ
 
-  cast : {A : Set ℓₛ} → F.Function _ A (Fₒ (Fₒ A))
-  cast {A} x = PEq.subst (λ P → F.Function _ A P) (PEq.sym is-inv) (λ x → x) x
+-- The output of our compiling some g into its categorical representation must be
+-- an inhabitant of (ResultType g). Note that we require g to be of type `H P -> H Q ∈ Arr Sets`,
+-- this makes sure that we know the type of the resulting arrow, f, beforehand: `P ⇨ Q ∈ Arr C`
+ResultType : {P Q : obj} → F.Function _ (C.Fₒ P) (C.Fₒ Q) → Set (ℓ ⊔ ℓₛ)
+ResultType {P} {Q} g = Σ (P ⇨ Q) (λ f → C.Fₘ f C.≈ g)
 
-  uncast : {A : Set ℓₛ} → F.Function _ (Fₒ (Fₒ A)) A
-  uncast {A} x = PEq.subst (λ P → F.Function _ P A) (PEq.sym is-inv) (λ x → x) x
+transform : Term → Term × Term
+transform t = (t , con (quote tt) [])
 
-  open F.→-raw-instances ℓₛ
+mkProd : Term × Term → Term
+mkProd (a , b) = con (quote _,_) (vArg a ∷ vArg b ∷ [])
 
-  record C2C {A B : Set ℓₛ}(g : Function _ A B) : Set (ℓ ⊔ ℓₛ) where
-    field
-      result  : Fₒ A ⇨ Fₒ B
-      correct : Fₘ result ≈ (cast ∘ g ∘ uncast)
+macro
+  invert : {P Q : obj} → F.Function _ (C.Fₒ P) (C.Fₒ Q) → Term → TC Top
+  invert g hole = do
+    (g' , prf) ← transform <$> quoteTC g
+    unify hole (mkProd (g' , prf))
 
-  -- Calling "invert g", for instance, should unify the hole with: Σ obj (λ f → Hₒ obj ≈ g)
-  macro
-    invert : ∀{a} → (A : Set a) → Term → TC Top
-    invert g hole = {!!}
+  Q : ∀ {a}{A : Set a} → A → Term → TC Top
+  Q x hole = quoteTC x >>= quoteTC >>= unify hole
+
+  QQ : ∀ {a}{A : Set a} → A → Term → TC Top
+  QQ x hole = quoteTC x >>= normalise >>= quoteTC >>= unify hole
+
+{-
+  mkTopMacro : Term → TC Top
+  mkTopMacro hole = do
+    qtt ← quoteTC tt
+    unify hole (mkProd (qtt , qtt))
+
+a : Top × Top
+a = mkTopMacro
+-}
