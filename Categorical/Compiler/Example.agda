@@ -1,12 +1,11 @@
 module Categorical.Compiler.Example where
 
-open import Level renaming (zero to lz)
+open import Level
 
-import Categorical.Raw as C
-import Categorical.Equiv as C
-import Categorical.Laws as C renaming (Category to CategoryLaws)
-import Categorical.Homomorphism as C
-import Functions as F
+open import Categorical.Raw
+open import Categorical.Laws
+open import Categorical.Homomorphism
+open import Functions 0ℓ
 
 open import Data.Nat
 open import Data.Product
@@ -15,17 +14,10 @@ open import Data.Product
 -- This gives us a pointwise to pointfree conversion
 module PointFreeConversion where
 
-  open F.→-instances lz
-  open F.→-raw-instances lz
-  open F.→-laws-instances lz
+  open import Categorical.IdInstances Function
 
-  import Categorical.Compiler (F.Function lz)
-    ⦃ hₒ = C.id-Hₒ ⦄ ⦃ h = C.id-H ⦄
-    ⦃ H = C.id-CategoryH ⦄
-    as C2C
-
-  const : ∀{a b}{A : Set a}{B : Set b} → A → B → A
-  const f _ = f
+  open import Categorical.Compiler Function
+  open import Function using (const)
 
   test1 : ℕ → ℕ
   test1 x = x + x
@@ -35,26 +27,20 @@ module PointFreeConversion where
   --    == apply ∘ (apply ∘ ((const _+_) ▵ id) ▵ id)
 
   test1' : ℕ → ℕ
-  test1' = C.apply C.∘ ((C.apply C.∘ (const _+_ C.▵ C.id)) C.▵ C.id)
+  test1' = apply ∘ ((apply ∘ (const _+_ ▵ id)) ▵ id)
 
-  tgt1 : C2C.ResultType test1
-  tgt1 = test1' , C.refl
+  -- Conal: I'd use uncurried addition, in which case the translation is
+  -- simpler, obviating CartesianClosed (often unavailable).
+
+  tgt1 : ResultType test1
+  tgt1 = test1' , refl
 
 -- Now, let us try to pick H : ℕ → Set, whose action on objects is Fin,
 -- what would the target look like?
 module ToFinite where
 
-  open import Functions lz
-  open →-instances
-  open →-raw-instances
-  open →-laws-instances
-
   open import Finite
-  open finite-object-instances
-  open subcategory-instances
-
-  import Categorical.Compiler {obj = ℕ} _⇨_
-    as C2C
+  open import Categorical.Compiler {obj = ℕ} _⇨_
 
   import Data.Fin as Fin
 
@@ -65,5 +51,5 @@ module ToFinite where
   test1' : 3 ⇨ 4
   test1' = {!!}
 
-  tgt1 : C2C.ResultType test1
+  tgt1 : ResultType test1
   tgt1 = test1' , {!!}
