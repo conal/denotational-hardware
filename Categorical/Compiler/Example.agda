@@ -16,7 +16,14 @@ module PointFreeConversion where
 
   open import Categorical.IdInstances Function
 
-  open import Categorical.Compiler Function
+  open →-instances
+  open →-raw-instances
+  open →-laws-instances
+
+  import Categorical.Compiler Function
+    ⦃ hₒ = id-Hₒ ⦄ ⦃ h = id-H ⦄
+    ⦃ H = id-CategoryH ⦄
+    as C2C
   open import Function using (const)
 
   test1 : ℕ → ℕ
@@ -32,8 +39,14 @@ module PointFreeConversion where
   -- Conal: I'd use uncurried addition, in which case the translation is
   -- simpler, obviating CartesianClosed (often unavailable).
 
-  tgt1 : ResultType test1
+  tgt1 : C2C.ResultType test1
   tgt1 = test1' , refl
+
+  test2 : ℕ → ℕ
+  test2 x = x
+
+  tgt2 : C2C.ResultType test2
+  tgt2 = C2C.invert (λ x → x)
 
 -- Now, let us try to pick H : ℕ → Set, whose action on objects is Fin,
 -- what would the target look like?

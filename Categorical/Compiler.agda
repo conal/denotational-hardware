@@ -19,18 +19,23 @@ module Categorical.Compiler
            ⦃ F.→-raw-instances.equivalent ℓₛ ⦄ ⦃ c ⦄ ⦃ F.→-raw-instances.category ℓₛ ⦄ ⦄
  where
 
+open import Function
 open import Data.Product
+open import Data.Sum
+open import Data.Maybe using (Maybe; nothing; just)
 open import Data.Unit renaming (⊤ to Top)
 open import Data.List using (List; []; _∷_)
 open import Axiom.Extensionality.Propositional
+open import Agda.Builtin.String
+import Agda.Builtin.Nat as BN
 import Relation.Binary.PropositionalEquality as PEq
 
-open import Reflection
+import Reflection as R
+open R hiding (_>>=_; _>>_)
 open import Reflection.Name
 open import Reflection.Term
 open import Reflection.Argument
 open import Reflection.DeBruijn
-open import Reflection.TypeChecking.Monad.Syntax
 
 open F.→-raw-instances ℓₛ
 
@@ -40,17 +45,52 @@ open F.→-raw-instances ℓₛ
 ResultType : {P Q : obj} → F.Function _ (C.Fₒ P) (C.Fₒ Q) → Set (ℓ ⊔ ℓₛ)
 ResultType {P} {Q} g = Σ (P ⇨ Q) (λ f → C.Fₘ f C.≈ g)
 
-transform : Term → Term × Term
-transform t = (t , con (quote tt) [])
+pattern vlam x b = lam visible (abs x b)
+pattern hlam x b = lam hidden  (abs x b)
+pattern hcons¹ x = _ ⟅∷⟆ x
+pattern hcons² x = hcons¹ (hcons¹ x)
+pattern hcons³ x = hcons¹ (hcons² x)
+pattern hcons⁴ x = hcons¹ (hcons³ x)
+pattern hcons⁵ x = hcons¹ (hcons⁴ x)
+
+module Pure where
+  open import Category.Monad
+  open import Data.Sum.Categorical.Left (List ErrorPart) 0ℓ
+  open RawMonad monad
+
+  trBody : String → Term → Sumₗ Term
+
+  transform : Term → Sumₗ Term
+  transform e@(vlam x body) with strengthen body
+  ...| just body' = inj₂ (def (quote const) (vArg body' ∷ []))
+  ...| nothing = trBody x body
+  transform e = inj₁ (strErr "term is not vlam:" ∷ termErr e ∷ [])
+
+  trBody x (var BN.zero [])
+    = inj₂ (def (quote C.id) [])
+  trBody x (con (quote _,_) (hcons⁴ (vArg u ∷ vArg v ∷ [])))
+    = do tu ← transform (vlam x u)
+         tv ← transform (vlam x v)
+         inj₂ (def (quote C._▵_) (vArg tu ∷ vArg tv ∷ []))
+  trBody _ body = inj₁ (strErr "trBody incomplete:" ∷ termErr body ∷ [])
 
 mkProd : Term × Term → Term
 mkProd (a , b) = con (quote _,_) (vArg a ∷ vArg b ∷ [])
 
+mkRefl : Term
+mkRefl = con (quote PEq.refl) []
+
+open import Reflection.TypeChecking.Monad.Syntax
 macro
-  invert : {P Q : obj} → F.Function _ (C.Fₒ P) (C.Fₒ Q) → Term → TC Top
-  invert g hole = do
-    (g' , prf) ← transform <$> quoteTC g
-    unify hole (mkProd (g' , prf))
+  invert : {P Q : obj} → Term {- F.Function _ (C.Fₒ P) (C.Fₒ Q) -} → Term → TC Top
+  invert qg hole = do
+    inj₂ g' ← Pure.transform <$> return qg
+      where
+        inj₁ errs → typeError ( strErr "Could not convert term:"
+                              ∷ termErr qg
+                              ∷ strErr "; where:"
+                              ∷ errs)
+    unify hole (mkProd (g' , mkRefl))
 
   Q : ∀ {a}{A : Set a} → A → Term → TC Top
   Q x hole = quoteTC x >>= quoteTC >>= unify hole
