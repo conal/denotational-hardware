@@ -20,6 +20,7 @@ module Categorical.Compiler
  where
 
 open import Function
+open import Data.Bool
 open import Data.Product
 open import Data.Sum
 open import Data.Maybe using (Maybe; nothing; just)
@@ -29,6 +30,7 @@ open import Axiom.Extensionality.Propositional
 open import Agda.Builtin.String
 import Agda.Builtin.Nat as BN
 import Relation.Binary.PropositionalEquality as PEq
+import Relation.Binary.Structures as Structures
 
 import Reflection as R
 open R hiding (_>>=_; _>>_)
@@ -78,19 +80,29 @@ mkProd : Term × Term → Term
 mkProd (a , b) = con (quote _,_) (vArg a ∷ vArg b ∷ [])
 
 mkRefl : Term
-mkRefl = con (quote PEq.refl) []
+mkRefl = vlam "x" (con (quote PEq.refl) [])
+
+ctxToError : List (Arg Type) → List ErrorPart
+ctxToError [] = []
+ctxToError (arg (arg-info visible r) x ∷ xs) = strErr "V " ∷ termErr x ∷ ctxToError xs
+ctxToError (arg (arg-info hidden r) x ∷ xs) = strErr "H " ∷ termErr x ∷ ctxToError xs
+ctxToError (arg (arg-info instance′ r) x ∷ xs) = strErr "I " ∷ termErr x ∷ ctxToError xs
 
 open import Reflection.TypeChecking.Monad.Syntax
 macro
-  invert : {P Q : obj} → Term {- F.Function _ (C.Fₒ P) (C.Fₒ Q) -} → Term → TC Top
-  invert qg hole = do
+  invert : Bool → {P Q : obj} → F.Function _ (C.Fₒ P) (C.Fₒ Q) → Term → TC Top
+  invert dbg q hole = do
+    th ← inferType hole
+    qg ← withNormalisation true (quoteTC q)
     inj₂ g' ← Pure.transform <$> return qg
       where
         inj₁ errs → typeError ( strErr "Could not convert term:"
                               ∷ termErr qg
                               ∷ strErr "; where:"
                               ∷ errs)
-    unify hole (mkProd (g' , mkRefl))
+    let res = mkProd (g' , mkRefl)
+    if dbg then typeError (strErr "qg: " ∷ termErr qg ∷ strErr "Result: " ∷ termErr res ∷ [])
+           else unify hole res
 
   Q : ∀ {a}{A : Set a} → A → Term → TC Top
   Q x hole = quoteTC x >>= quoteTC >>= unify hole

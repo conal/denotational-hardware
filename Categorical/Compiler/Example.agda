@@ -9,17 +9,13 @@ open import Functions 0ℓ
 
 open import Data.Nat
 open import Data.Product
+import Data.Bool as Bool
 
 -- Simplest class of examples: when H is the identity functor.
 -- This gives us a pointwise to pointfree conversion
 module PointFreeConversion where
 
   open import Categorical.IdInstances Function
-
-  open →-instances
-  open →-raw-instances
-  open →-laws-instances
-
   import Categorical.Compiler Function
     ⦃ hₒ = id-Hₒ ⦄ ⦃ h = id-H ⦄
     ⦃ H = id-CategoryH ⦄
@@ -46,7 +42,10 @@ module PointFreeConversion where
   test2 x = x
 
   tgt2 : C2C.ResultType test2
-  tgt2 = C2C.invert (λ x → x)
+  tgt2 = (id ,  refl)
+
+  tgt2' : C2C.ResultType test2
+  tgt2' = C2C.invert Bool.false test2
 
 -- Now, let us try to pick H : ℕ → Set, whose action on objects is Fin,
 -- what would the target look like?
