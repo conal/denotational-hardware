@@ -5,8 +5,10 @@ open import Level
 module Functions.Type (ℓ : Level) where
 
 import Data.Unit as U
+open import Data.Empty.Polymorphic using () renaming (⊥ to ⊥′)
 open import Data.Unit.Polymorphic using () renaming (⊤ to ⊤′)
 open import Data.Product using () renaming (_×_ to _×′_)
+open import Data.Sum using (_⊎_)
 open import Data.Fin using (Fin)
 open import Data.Fin.Patterns using (0F; 1F)
 
@@ -67,6 +69,9 @@ module →-instances where
   open import Categorical.Object
 
   instance
+
+    coproducts : Coproducts (Set ℓ)
+    coproducts = record { ⊥ = ⊥′ ; _+_ = _⊎_ }
 
     products : Products (Set ℓ)
     products = record { ⊤ = ⊤′ ; _×_ = _×′_ }

@@ -6,7 +6,7 @@ open import Level
 
 open import Categorical.Homomorphism
 open import Categorical.Laws as L
-       hiding (Category; Cartesian; Semigroup; Monoid; CartesianClosed; Logic)
+       hiding (Category; Cocartesian; Cartesian; Semigroup; Monoid; CartesianClosed; Logic)
 open import Categorical.Reasoning
 
 module Categorical.Subcategory
@@ -32,6 +32,12 @@ module subcategory-instances where
   instance
     category : Category _⇨_
     category = record { id = mk id ; _∘_ = λ (mk g) (mk f) → mk (g ∘ f) }
+
+    cocartesian : ⦃ _ : Coproducts obj ⦄ ⦃ _ : Cocartesian _↠_ ⦄
+                  ⦃ _ : Coproducts I ⦄ → -- ⦃ _ : ProductsH I _↠_ ⦄ →
+                  Cocartesian _⇨_
+    cocartesian = {!!}
+
 
     cartesian : ⦃ _ : Products obj ⦄ ⦃ _ : Cartesian _↠_ ⦄
                 ⦃ _ : Products I ⦄ ⦃ _ : ProductsH I _↠_ ⦄ →
@@ -107,7 +113,7 @@ module subcategory-instances where
                ; F-xor   = F-2
                ; F-cond  = F-c
                }
-        where 
+        where
               F-0 : ∀ {f : ⊤ ↠ Bool} → (β ∘ f ∘ ε⁻¹) ∘ ε ≈ β ∘ f
               F-0 = ∘-assocʳ³ ; ∘-assocˡ ; elimʳ ε⁻¹∘ε
 

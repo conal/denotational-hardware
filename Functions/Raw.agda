@@ -6,6 +6,8 @@ module Functions.Raw (ℓ : Level) where
 
 import Function as F
 open import Data.Product as × using (_,_; proj₁; proj₂; <_,_>)
+open import Data.Sum using (inj₁; inj₂; [_,_])
+open import Data.Empty.Polymorphic using (⊥-elim)
 import Data.Bool as B
 
 open import Categorical.Raw
@@ -19,6 +21,9 @@ module →-raw-instances where
 
     category : Category Function
     category = record { id = F.id ; _∘_ = F._∘′_ }
+
+    cocartesian : Cocartesian Function
+    cocartesian = record { void = ⊥-elim ; _▿_ = [_,_] ; inl = inj₁ ; inr = inj₂ }
 
     cartesian : Cartesian Function
     cartesian = record { _▵_ = <_,_> ; exl = proj₁ ; exr = proj₂ }

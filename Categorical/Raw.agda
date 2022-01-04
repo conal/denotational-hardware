@@ -22,6 +22,29 @@ record Category {obj : Set o} (_⇨_ : obj → obj → Set ℓ) : Set (o ⊔ ℓ
 
 open Category ⦃ … ⦄ public
 
+record Cocartesian {obj : Set o} ⦃ _ : Coproducts obj ⦄
+         (_⇨′_ : obj → obj → Set ℓ)
+         ⦃ _ : Category _⇨′_ ⦄
+    : Set (o ⊔ ℓ) where
+  private infix 0 _⇨_; _⇨_ = _⇨′_
+  infixr 7 _▿_
+  field
+    void : ⊥ ⇨ a
+    _▿_  : (a ⇨ c) → (b ⇨ c) → (a + b ⇨ c)
+    inl  : a ⇨ a + b
+    inr  : b ⇨ a + b
+
+  codup : a + a ⇨ a
+  codup = id ▿ id
+
+  coswap : a + b ⇨ b + a
+  coswap = inr ▿ inl
+
+  infixr 7 _⊕_
+  _⊕_ : (a ⇨ c) → (b ⇨ d) → (a + b ⇨ c + d)
+  f ⊕ g = inl ∘ f ▿ inr ∘ g
+
+open Cocartesian ⦃ … ⦄ public
 
 record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
          (_⇨′_ : obj → obj → Set ℓ)
@@ -132,7 +155,6 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
 
 open Cartesian ⦃ … ⦄ public
 
-
 record Semigroup {obj : Set o} ⦃ _ : Products obj ⦄ ⦃ _ : MonoidObj obj ⦄
     (_⇨′_ : obj → obj → Set ℓ) ⦃ _ : Category _⇨′_ ⦄
    : Set (o ⊔ ℓ) where
@@ -185,7 +207,7 @@ record CartesianClosed {obj : Set o}
     : Set (o ⊔ ℓ) where
   private infix 0 _⇨_; _⇨_ = _⇨′_
   field
-    
+
     curry : (a × b ⇨ c) → (a ⇨ (b ⇛ c))
     apply : (a ⇛ b) × a ⇨ b
 
