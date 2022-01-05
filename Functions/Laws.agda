@@ -6,9 +6,10 @@ module Functions.Laws (ℓ : Level) where
 
 open import Function.Equivalence hiding (id; _∘_)
 open import Data.Product using (_,_)
+open import Data.Empty.Polymorphic using (⊥-elim)
 
 open import Categorical.Raw
-      hiding (Category; Cartesian; Semigroup; Monoid; CartesianClosed; Logic)
+      hiding (Category; Cocartesian; Cartesian; Semigroup; Monoid; CartesianClosed; Logic)
 open import Categorical.Laws
 open import Categorical.Equiv
 open import Functions.Raw ℓ public
@@ -32,6 +33,21 @@ module →-laws-instances where
       ; ∘≈        = λ { {f = f}{k = k} h≈k f≈g x →
                       trans≡ (h≈k (f x)) (cong k (f≈g x)) }
       }
+
+    cocartesian : Cocartesian Function
+    cocartesian = record
+      { ∀void = ⊥-elim
+      ; ∀+ = equivalence
+              (λ k≈f▿g → (λ x → k≈f▿g (inl x)) , λ x → k≈f▿g (inr x))
+              (λ { (k∘inl≈f , k∘inr≈g) (inj₁ x) → k∘inl≈f x
+                 ; (k∘inl≈f , k∘inr≈g) (inj₂ x) → k∘inr≈g x
+                 })
+      ; ▿≈ = λ h≈k f≈g → λ { (inj₁ x) → h≈k x
+                           ; (inj₂ x) → f≈g x
+                           }
+      }
+      where
+        open import Data.Sum
 
     cartesian : Cartesian Function
     cartesian = record

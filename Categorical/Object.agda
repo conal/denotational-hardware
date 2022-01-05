@@ -5,7 +5,7 @@ module Categorical.Object where
 open import Level using (Level; lift; _⊔_)
 open import Function
 
-open import Data.Nat hiding (_⊔_)
+open import Data.Nat hiding (_⊔_; _+_)
 
 private
   variable
@@ -38,6 +38,14 @@ record IndexedProducts (obj : Set o) {ℓᵢ} (I : Set ℓᵢ) : Set (o ⊔ ℓ�
 
 open IndexedProducts ⦃ … ⦄ public
 -}
+
+record Coproducts (obj : Set o) : Set o where
+  infixr 1 _+_
+  field
+    ⊥ : obj
+    _+_ : obj → obj → obj
+
+open Coproducts ⦃ … ⦄ public
 
 record MonoidObj (obj : Set o) : Set o where
   field

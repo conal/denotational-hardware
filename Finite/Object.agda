@@ -3,7 +3,7 @@ module Finite.Object where
 
 open import Level using (0ℓ)
 
-open import Data.Nat
+open import Data.Nat renaming (_+_ to _+ℕ_)
 open import Data.Fin
 open import Data.Fin.Patterns using (0F; 1F)
 open import Data.Fin.Properties
@@ -22,6 +22,9 @@ module finite-object-instances where
     Hₒ : Homomorphismₒ ℕ Set
     Hₒ = record { Fₒ = Fin }
 
+    coproducts : Coproducts ℕ
+    coproducts = record { ⊥ = 0 ; _+_ = _+ℕ_ }
+
     products : Products ℕ
     products = record { ⊤ = 1 ; _×_ = _*_ }
 
@@ -32,6 +35,7 @@ module finite-object-instances where
            ; ε⁻¹ = λ { zero → tt }
            ; μ⁻¹ = λ {m n} → remQuot n
            }
+
     spH : StrongProductsH ℕ ⟨→⟩
     spH = record
             { ε⁻¹∘ε = λ { tt → refl }
@@ -41,7 +45,6 @@ module finite-object-instances where
             }
     -- TODO: Construct pH and spH from 1↔⊤ and *↔×
 
-    -- TODO: Coproducts
     -- TODO: Exponentials
 
     boolean : Boolean ℕ

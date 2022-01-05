@@ -66,6 +66,22 @@ id-CategoryH : {obj : Set o} {_⇨_ : obj → obj → Set ℓ}
              → CategoryH _⇨_ _⇨_ ⦃ Hₒ = id-Hₒ ⦄ ⦃ H = id-H ⦄
 id-CategoryH = record { F-id = refl ; F-∘ = refl }
 
+record CoproductsH
+    (obj₁ : Set o₁) ⦃ _ : Coproducts obj₁ ⦄
+    {obj₂ : Set o₂} ⦃ _ : Coproducts obj₂ ⦄
+    (_⇨₂′_ : obj₂ → obj₂ → Set ℓ₂)
+    ⦃ Hₒ : Homomorphismₒ obj₁ obj₂ ⦄
+    : Set (o₁ ⊔ o₂ ⊔ ℓ₂) where
+  private infix 0 _⇨₂_; _⇨₂_ = _⇨₂′_
+  field
+    u : Fₒ ⊥ ⇨₂ ⊥
+    δ : {a b : obj₁} → Fₒ (a + b) ⇨₂ Fₒ a + Fₒ b
+
+    u⁻¹ : ⊥ ⇨₂ Fₒ ⊥
+    δ⁻¹ : {a b : obj₁} → Fₒ a + Fₒ b ⇨₂ Fₒ (a + b)
+
+open CoproductsH ⦃ … ⦄ public
+
 record ProductsH
     (obj₁ : Set o₁) ⦃ _ : Products obj₁ ⦄
     {obj₂ : Set o₂} ⦃ _ : Products obj₂ ⦄
@@ -400,7 +416,7 @@ record MonoidH
   field
     F-⟨ι⟩ : Fₘ ⟨ι⟩ ∘ ε ≈ δ ∘ ⟨ι⟩
 
-  module _ 
+  module _
     ⦃ _ : StrongProductsH obj₁ _⇨₂_ ⦄ ⦃ _ : StrongMonoidObjH obj₁ _⇨₂_ ⦄
     ⦃ _ : L.Category _⇨₂_ ⦄ ⦃ _ : L.Cartesian _⇨₂_ ⦄
     where
@@ -480,7 +496,7 @@ record StrongBooleanH
 
 open StrongBooleanH ⦃ … ⦄ public
 
-id-StrongBooleanH : 
+id-StrongBooleanH :
       {obj₂ : Set o}  ⦃ _ : Boolean obj₂ ⦄
       {_⇨₂_ : obj₂ → obj₂ → Set ℓ₂}
       ⦃ _ : Category _⇨₂_ ⦄
@@ -575,7 +591,7 @@ record LogicH
     F-xor′ : Fₘ xor ≈ β ∘ xor ∘ (β⁻¹ ⊗ β⁻¹) ∘ μ⁻¹
     F-xor′ = sym (∘-assoc-elimʳ (∘-inverse μ∘μ⁻¹ (⊗-inverse β∘β⁻¹ β∘β⁻¹)))
            ; ∘≈ˡ F-xor ; ∘-assocʳ
-    
+
     F-cond′  : ∀ {a : obj₁} → Fₘ cond ≈ cond ∘ (β⁻¹ ⊗ μ⁻¹ {a = a} {a}) ∘ μ⁻¹
     F-cond′ = sym (∘-assoc-elimʳ (∘-inverse μ∘μ⁻¹ (⊗-inverse β∘β⁻¹ μ∘μ⁻¹)))
             ; ∘≈ˡ F-cond
@@ -585,7 +601,7 @@ record LogicH
     --   begin
     --     Fₘ cond
     --   ≈⟨ sym (∘-assoc-elimʳ (∘-inverse μ∘μ⁻¹ (⊗-inverse β∘β⁻¹ μ∘μ⁻¹))) ⟩
-    --     (Fₘ cond ∘ μ ∘ (β ⊗ μ)) ∘ ((β⁻¹ ⊗ μ⁻¹) ∘ μ⁻¹) 
+    --     (Fₘ cond ∘ μ ∘ (β ⊗ μ)) ∘ ((β⁻¹ ⊗ μ⁻¹) ∘ μ⁻¹)
     --   ≈⟨ ∘≈ˡ F-cond ⟩
     --     cond ∘ (β⁻¹ ⊗ μ⁻¹) ∘ μ⁻¹
     --   ∎
