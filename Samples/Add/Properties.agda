@@ -1,6 +1,6 @@
 {-# OPTIONS --safe --without-K #-}
 
-module Examples.Add.Properties where
+module Samples.Add.Properties where
 
 open import Level using (0ℓ)
 open import Data.Product using (_,_)
@@ -11,7 +11,7 @@ open import Categorical.Raw
 open import Functions.Laws 0ℓ
 open import Categorical.Arrow _⇾_
 
-open import Examples.Add
+open import Samples.Add
 
 bval : Bool → ℕ
 bval = bool 0 1

@@ -31,7 +31,7 @@ import Linearize
 import SSA
 import Dot
 
-import Examples.Add
-import Examples.Add.Properties
+import Samples.Add
+import Samples.Add.Properties
 
 import Test

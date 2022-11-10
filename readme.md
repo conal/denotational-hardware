@@ -49,7 +49,7 @@ Makefile targets:
     Recursive, in order to support exponentials.
     Conversion from linearized morphisms.
 *   `Dot`: generation of GraphViz format from SSA.
-*   `Examples`: hardware-friendly algorithms.
+*   `Samples`: hardware-friendly algorithms.
 *   `Test`: generate pictures from morphisms.
 *   `Everything`: import all code as an easy check that everything works.
 

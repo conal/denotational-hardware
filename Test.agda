@@ -25,7 +25,7 @@ open import Dot
 -- TODO: trim imports
 
 open import Ty.Utils
-open import Examples.Add
+open import Samples.Add
 
 shiftR-swap : ∀ {n} → Bool × V Bool n ⇨ Bool × V Bool n
 shiftR-swap = swap ∘ shiftR

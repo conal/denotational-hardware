@@ -5,7 +5,7 @@ open import Data.Nat
 open import Categorical.Raw
 open import Functions.Raw
 
-module Examples.Add
+module Samples.Add
          {o} {obj : Set o} ⦃ _ : Products obj ⦄ ⦃ _ : Boolean obj ⦄
          {_⇨_ : obj → obj → Set} (let private infix 0 _⇨_; _⇨_ = _⇨_)
          ⦃ _ : Category _⇨_ ⦄ ⦃ _ : Cartesian _⇨_ ⦄ ⦃ _ : Logic _⇨_ ⦄
@@ -66,16 +66,8 @@ ripple f (suc n) = assocˡ ∘ second (ripple f n) ∘ inAssocˡ f
 rippleAdd : ∀ n → V (Bool × Bool) n ⇨ᶜ V Bool n
 rippleAdd = ripple fullAdd
 
-constˡ : (a × b ⇨ c) → (⊤ ⇨ a) → (b ⇨ c)
-constˡ f a = f ∘ first a ∘ unitorⁱˡ
-
--- b
--- tt , b
--- a , b
--- f (a , b)
-
 speculate : (Cⁱ a ⇨ b) → (Cⁱ a ⇨ b)
-speculate f = cond ∘ second (constˡ f false ▵ constˡ f true)
+speculate f = cond ∘ second (f ∘ constˡ false ▵ f ∘ constˡ true)
 
 -- (cᵢ , a)
 -- (cᵢ , (f (false , a) , f (true , a)))

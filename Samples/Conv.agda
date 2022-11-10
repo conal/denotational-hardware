@@ -1,7 +1,7 @@
 -- 1D convolution from [*Type-Directed Scheduling of Streaming
 -- Accelerators*](https://aetherling.org/aetherling.pdf)
 
-module Examples.Conv where
+module Samples.Conv where
 
 open import Data.Product hiding (map; zip)
 open import Function

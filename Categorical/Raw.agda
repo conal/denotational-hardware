@@ -73,6 +73,12 @@ record Cartesian {obj : Set o} ⦃ _ : Products obj ⦄
   unitorⁱʳ : a ⇨ a × ⊤
   unitorⁱʳ = id ▵ !
 
+  constˡ : (⊤ ⇨ a) → (b ⇨ a × b)
+  constˡ f = first f ∘ unitorⁱˡ
+
+  constʳ : (⊤ ⇨ b) → (a ⇨ a × b)
+  constʳ g = second g ∘ unitorⁱʳ
+
   assocˡ : a × (b × c) ⇨ (a × b) × c
   assocˡ = second exl ▵ exr ∘ exr
 
