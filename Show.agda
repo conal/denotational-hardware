@@ -28,6 +28,12 @@ instance
   ℕ-Show : Show ℕ
   ℕ-Show = record { show = NS.show }
 
+  open import Data.Rational
+  import Data.Rational.Show as QS
+
+  ℚ-Show : Show ℚ
+  ℚ-Show = record { show = QS.show }
+
   open import Data.Fin using (Fin)
   import Data.Fin.Show as FS
 
