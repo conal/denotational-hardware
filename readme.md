@@ -1,7 +1,5 @@
 ## Denotational hardware design in Agda
 
-*Note that this project replaces [agda-machines](https://github.com/conal/agda-machines).*
-
 ## Introduction
 
 This Agda project aims to synthesize machine-verified, parallel hardware designs from high-level denotational specifications.
