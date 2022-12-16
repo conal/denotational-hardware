@@ -14,7 +14,7 @@ module Categorical.Subcategory
   {o ℓ} {obj : Set o}
   (_↠_ : obj → obj → Set ℓ) (let infix 0 _↠_; _↠_ = _↠_)
   ⦃ _ : Category _↠_ ⦄
-  ⦃ _ : Homomorphismₒ J obj ⦄
+  ⦃ Hₒ : Homomorphismₒ J obj ⦄
  where
 
 infix 0 _⇨_
